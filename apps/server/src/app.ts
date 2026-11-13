@@ -3,6 +3,9 @@ import cors from "cors";
 import helmet from "helmet";
 import env from "./config.js";
 import { getConnectionStatus } from "./db.js";
+import { authRouter } from "./routes/auth.js";
+import { tripsRouter } from "./routes/trips.js";
+import { preferencesRouter } from "./routes/preferences.js";
 
 export function createApp() {
   const app = express();
@@ -32,6 +35,11 @@ export function createApp() {
     });
   });
 
+  // ── API v1 routes ──────────────────────────────────────
+  app.use("/api/v1/auth", authRouter);
+  app.use("/api/v1/trips", tripsRouter);
+  app.use("/api/v1/me/preferences", preferencesRouter);
+
   // ── Root redirect ──────────────────────────────────────
   app.get("/", (_req, res) => {
     res.json({
@@ -39,6 +47,15 @@ export function createApp() {
       docs: "/api/health",
     });
   });
+
+  // ── Global error handler ───────────────────────────────
+  app.use(
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    (err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+      console.error("[server] Unhandled error:", err);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  );
 
   return app;
 }

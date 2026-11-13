@@ -1,12 +1,20 @@
 /**
- * @travora/contracts – Shared Zod schemas and inferred types.
- *
- * Phase 0: Stub exports so the package builds.
- * Phase 1 fills in Trip, User, Budget, etc.
+ * @travora/contracts – Shared Zod schemas and inferred TypeScript types.
  */
 
 export const CONTRACTS_VERSION = "0.1.0" as const;
 
-// Re-export zod for convenience so consumers don't need a direct dependency
+// Re-export Zod
 export { z } from "zod";
 
+// Common
+export * from "./common.js";
+
+// User & Auth
+export * from "./user.js";
+
+// Preferences
+export * from "./preferences.js";
+
+// Trip
+export * from "./trip.js";
