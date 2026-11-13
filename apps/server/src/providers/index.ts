@@ -66,3 +66,4 @@ export function getProviderRegistry(overrides?: Partial<ProviderRegistry>): Prov
     hotels: overrides?.hotels ?? getHotelsProvider(),
   };
 }
+

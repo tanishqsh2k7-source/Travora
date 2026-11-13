@@ -34,3 +34,4 @@ export const HotelSearchQuerySchema = z.object({
   currency: z.string().length(3).toUpperCase().default("USD"),
 });
 export type HotelSearchQuery = z.infer<typeof HotelSearchQuerySchema>;
+

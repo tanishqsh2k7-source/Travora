@@ -30,3 +30,4 @@ export const WeatherForecastSchema = z.object({
   provider: z.string(),
 });
 export type WeatherForecast = z.infer<typeof WeatherForecastSchema>;
+

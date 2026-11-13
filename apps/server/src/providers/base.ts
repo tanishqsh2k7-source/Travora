@@ -60,3 +60,4 @@ export interface ProviderRegistry {
   flights: IFlightsProvider;
   hotels: IHotelsProvider;
 }
+

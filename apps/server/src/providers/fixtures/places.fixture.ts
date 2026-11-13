@@ -216,3 +216,4 @@ export class PlacesFixtureAdapter implements IPlacesProvider {
     };
   }
 }
+

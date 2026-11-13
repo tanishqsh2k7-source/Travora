@@ -100,3 +100,4 @@ export class HotelsFixtureAdapter implements IHotelsProvider {
     return hotels;
   }
 }
+

@@ -90,3 +90,4 @@ export class FlightsFixtureAdapter implements IFlightsProvider {
     return offers;
   }
 }
+

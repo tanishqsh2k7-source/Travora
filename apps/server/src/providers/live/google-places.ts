@@ -163,3 +163,4 @@ export class GooglePlacesLiveAdapter implements IPlacesProvider {
     return this.normalizePlace(data);
   }
 }
+

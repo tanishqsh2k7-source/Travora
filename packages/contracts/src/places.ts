@@ -35,3 +35,4 @@ export const PlaceSearchQuerySchema = z.object({
   limit: z.number().int().positive().default(10),
 });
 export type PlaceSearchQuery = z.infer<typeof PlaceSearchQuerySchema>;
+

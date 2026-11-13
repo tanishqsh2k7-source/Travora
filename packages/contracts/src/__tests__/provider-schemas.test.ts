@@ -138,3 +138,4 @@ describe("Provider schemas", () => {
     expect(parsed.totalPrice.amount).toBe(8400000);
   });
 });
+

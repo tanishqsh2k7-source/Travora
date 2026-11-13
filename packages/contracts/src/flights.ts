@@ -41,3 +41,4 @@ export const FlightSearchQuerySchema = z.object({
   currency: z.string().length(3).toUpperCase().default("USD"),
 });
 export type FlightSearchQuery = z.infer<typeof FlightSearchQuerySchema>;
+
