@@ -1,0 +1,28 @@
+{
+  "name": "travora",
+  "version": "0.1.0",
+  "private": true,
+  "description": "AI-powered travel planning with multi-agent orchestration",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace=apps/server",
+    "dev:client": "npm run dev --workspace=apps/client",
+    "dev:all": "npm run dev --workspaces --if-present",
+    "build": "npm run build --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "test:server": "npm run test --workspace=apps/server",
+    "test:client": "npm run test --workspace=apps/client",
+    "test:contracts": "npm run test --workspace=packages/contracts",
+    "lint": "npm run lint --workspaces --if-present",
+    "clean": "npm run clean --workspaces --if-present",
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
+
