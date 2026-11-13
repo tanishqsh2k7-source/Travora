@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import { TripModel, UserPreferenceModel, PlanningRunModel, type IPlanningRun } from "../models/index.js";
 import { createPlanningGraph } from "./graph.js";
+import { eventService } from "../services/event-service.js";
 import type { CreateTripRequest, UserPreferences, ReplanRequest } from "@travora/contracts";
 
 const graph = createPlanningGraph();
@@ -15,8 +16,15 @@ export async function executePlanningRun(
   try {
     run.status = "running";
     run.currentStage = "intake";
-    run.progressPct = 20;
+    run.progressPct = 10;
     await run.save();
+
+    eventService.emitEvent(runId, {
+      type: "run.started",
+      stage: "intake",
+      progress: 10,
+      message: "Intake and normalization: validating dates, travelers, and parameters.",
+    });
 
     const trip = await TripModel.findById(run.tripId);
     if (!trip) throw new Error("Trip not found");
@@ -56,9 +64,23 @@ export async function executePlanningRun(
       constraints: trip.constraints,
     };
 
+    eventService.emitEvent(runId, {
+      type: "agent.status",
+      stage: "supervisor",
+      progress: 25,
+      message: "Supervisor formulating task plan and capability allowlist.",
+    });
+
     run.currentStage = "research";
-    run.progressPct = 40;
+    run.progressPct = 45;
     await run.save();
+
+    eventService.emitEvent(runId, {
+      type: "agent.status",
+      stage: "research",
+      progress: 45,
+      message: "Dispatched parallel research branches for attractions, transit, stays, and weather.",
+    });
 
     const finalState = await graph.invoke(
       {
@@ -76,6 +98,16 @@ export async function executePlanningRun(
       }
     );
 
+    if (finalState.replanPatch) {
+      eventService.emitEvent(runId, {
+        type: "replan.started",
+        stage: "replan",
+        progress: 85,
+        message: finalState.replanPatch.changeSummary,
+        payload: { patch: finalState.replanPatch },
+      });
+    }
+
     run.status = finalState.status === "completed" ? "completed" : "partial";
     run.currentStage = "completed";
     run.progressPct = 100;
@@ -83,12 +115,27 @@ export async function executePlanningRun(
     run.result = finalState.finalResponse;
     run.warnings = finalState.warnings ?? [];
     await run.save();
+
+    eventService.emitEvent(runId, {
+      type: "run.completed",
+      stage: "completed",
+      progress: 100,
+      message: "Trip planning completed successfully with verified itinerary and budget.",
+      payload: { result: finalState.finalResponse },
+    });
   } catch (err) {
     console.error("[runner] Planning run failed:", err);
     run.status = "failed";
     run.error = err instanceof Error ? err.message : String(err);
     run.finishedAt = new Date();
     await run.save();
+
+    eventService.emitEvent(runId, {
+      type: "run.failed",
+      stage: "error",
+      progress: 100,
+      message: `Planning run failed: ${run.error}`,
+    });
   }
 }
 

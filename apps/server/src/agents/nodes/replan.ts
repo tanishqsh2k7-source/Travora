@@ -1,5 +1,6 @@
 import type { TravelState, TravelStateUpdate } from "../state.js";
 import { optimizeRoutes } from "../../engines/index.js";
+import { eventService } from "../../services/event-service.js";
 import type { ReplanPatch, PlaceCandidate, OptimizedDaySchedule } from "@travora/contracts";
 
 const INDOOR_TYPES = ["museum", "art_gallery", "shopping", "food", "market"];
@@ -41,6 +42,15 @@ export async function replanNode(state: TravelState): Promise<TravelStateUpdate>
 
   const affectedDayIndex = affectedDayNum - 1;
   const originalDay = currentDays[affectedDayIndex];
+
+  if (state.runId) {
+    eventService.emitEvent(state.runId, {
+      type: "replan.started",
+      stage: "replan",
+      progress: 88,
+      message: `Replanning Day ${affectedDayNum}: swapping outdoor activities for indoor alternatives.`,
+    });
+  }
 
   if (!originalDay) {
     warnings.push(`Replanning targeted day ${affectedDayNum}, which does not exist in itinerary.`);
@@ -113,3 +123,4 @@ export async function replanNode(state: TravelState): Promise<TravelStateUpdate>
     warnings,
   };
 }
+

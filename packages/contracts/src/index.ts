@@ -39,3 +39,6 @@ export * from "./task-plan.js";
 
 // Critic & Replanning Schemas (Phase 6)
 export * from "./replanning.js";
+
+// Events & SSE Schemas (Phase 7)
+export * from "./events.js";

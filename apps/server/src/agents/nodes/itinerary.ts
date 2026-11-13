@@ -1,7 +1,17 @@
 import type { TravelState, TravelStateUpdate } from "../state.js";
 import { optimizeRoutes, calculateBudget, validateSchedule } from "../../engines/index.js";
+import { eventService } from "../../services/event-service.js";
 
 export async function itineraryNode(state: TravelState): Promise<TravelStateUpdate> {
+  if (state.runId) {
+    eventService.emitEvent(state.runId, {
+      type: "tool.called",
+      stage: "itinerary",
+      progress: 65,
+      message: "Assembling itinerary schedule, computing distance matrices, and optimizing daily routes.",
+    });
+  }
+
   const req = state.request;
   const places = state.placesResult ?? [];
   const selectedHotel = state.hotelsResult?.[0];

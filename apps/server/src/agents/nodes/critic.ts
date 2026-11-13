@@ -1,5 +1,6 @@
 import type { TravelState, TravelStateUpdate } from "../state.js";
 import { validateSchedule } from "../../engines/index.js";
+import { eventService } from "../../services/event-service.js";
 import type { ValidationReport, ValidationIssue } from "@travora/contracts";
 
 const OUTDOOR_KEYWORDS = [
@@ -23,6 +24,15 @@ function isOutdoorPlace(name: string, types: string[]): boolean {
 }
 
 export async function criticNode(state: TravelState): Promise<TravelStateUpdate> {
+  if (state.runId) {
+    eventService.emitEvent(state.runId, {
+      type: "tool.called",
+      stage: "critic",
+      progress: 75,
+      message: "Critic running two-stage audit: deterministic schedule checks & weather coherence.",
+    });
+  }
+
   const days = state.routeResult?.days ?? [];
   const budgetBreakdown = state.budgetResult;
   const placesMap = new Map((state.placesResult ?? []).map((p) => [p.id, p]));
@@ -94,7 +104,18 @@ export async function criticNode(state: TravelState): Promise<TravelStateUpdate>
     passedChecks,
   };
 
+  if (state.runId && issues.length > 0) {
+    eventService.emitEvent(state.runId, {
+      type: "validation.issue",
+      stage: "critic",
+      progress: 80,
+      message: `Critic identified issue: ${issues[0].message}`,
+      payload: { issues },
+    });
+  }
+
   return {
     validationReport,
   };
 }
+
