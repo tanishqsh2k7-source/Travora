@@ -25,3 +25,8 @@ export * from "./routes.js";
 export * from "./weather.js";
 export * from "./flights.js";
 export * from "./hotels.js";
+
+// Deterministic Engine Schemas (Phase 3)
+export * from "./budget.js";
+export * from "./optimization.js";
+export * from "./validation.js";
