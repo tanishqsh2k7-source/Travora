@@ -243,3 +243,4 @@ export function PreferencesModal({ isOpen, onClose, onSaved }: PreferencesModalP
     </div>
   );
 }
+
