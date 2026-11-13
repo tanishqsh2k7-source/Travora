@@ -1,4 +1,4 @@
-# Wayfarer travel planner
+# Travora travel planner
 
 A small full-stack travel-planning demo that implements intent-based agent routing, budget-aware estimates, route ordering, trip replanning, and saved travel preferences.
 
