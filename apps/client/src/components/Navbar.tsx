@@ -35,3 +35,4 @@ export function Navbar({ onNewTrip, hasActiveTrip }: NavbarProps) {
     </header>
   );
 }
+

@@ -22,3 +22,4 @@ export const AgentEventSchema = z.object({
   payload: z.record(z.any()).optional(),
 });
 export type AgentEvent = z.infer<typeof AgentEventSchema>;
+
