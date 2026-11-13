@@ -30,3 +30,4 @@ export type UserPreferences = z.infer<typeof UserPreferencesSchema>;
 
 export const UpdatePreferencesRequestSchema = UserPreferencesSchema.partial();
 export type UpdatePreferencesRequest = z.infer<typeof UpdatePreferencesRequestSchema>;
+

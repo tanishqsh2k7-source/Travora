@@ -30,3 +30,4 @@ export function verifyToken(token: string): AuthContext {
     email: decoded.email,
   };
 }
+

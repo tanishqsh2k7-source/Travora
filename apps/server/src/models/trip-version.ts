@@ -49,3 +49,4 @@ export const TripVersionModel = mongoose.model<ITripVersion>(
   "TripVersion",
   TripVersionSchema
 );
+

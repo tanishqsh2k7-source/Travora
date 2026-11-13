@@ -148,3 +148,4 @@ tripsRouter.get("/:tripId/versions", async (req, res, next) => {
     next(err);
   }
 });
+

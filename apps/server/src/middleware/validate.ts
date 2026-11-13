@@ -21,3 +21,4 @@ export function validateBody<T>(schema: ZodSchema<T>) {
     }
   };
 }
+

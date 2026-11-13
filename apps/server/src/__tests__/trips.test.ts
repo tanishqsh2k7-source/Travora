@@ -231,3 +231,4 @@ describe("Trips API (/api/v1/trips)", () => {
     });
   });
 });
+

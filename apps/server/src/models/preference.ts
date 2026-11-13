@@ -59,3 +59,4 @@ export const UserPreferenceModel = mongoose.model<IUserPreference>(
   "UserPreference",
   UserPreferenceSchema
 );
+

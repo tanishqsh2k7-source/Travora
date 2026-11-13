@@ -103,3 +103,4 @@ const TripSchema = new Schema<ITrip>(
 );
 
 export const TripModel = mongoose.model<ITrip>("Trip", TripSchema);
+

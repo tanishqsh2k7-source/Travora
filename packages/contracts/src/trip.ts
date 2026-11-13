@@ -67,3 +67,4 @@ export const TripResponseSchema = z.object({
 });
 
 export type TripResponse = z.infer<typeof TripResponseSchema>;
+

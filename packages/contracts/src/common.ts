@@ -29,3 +29,4 @@ export const DateRangeSchema = z
   });
 
 export type DateRange = z.infer<typeof DateRangeSchema>;
+
