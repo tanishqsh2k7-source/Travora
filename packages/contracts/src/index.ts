@@ -18,3 +18,10 @@ export * from "./preferences.js";
 
 // Trip
 export * from "./trip.js";
+
+// Provider Schemas (Phase 2)
+export * from "./places.js";
+export * from "./routes.js";
+export * from "./weather.js";
+export * from "./flights.js";
+export * from "./hotels.js";
