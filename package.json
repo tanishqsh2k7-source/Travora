@@ -13,6 +13,7 @@
     "dev:all": "npm run dev --workspaces --if-present",
     "build": "npm run build --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
+    "demo": "npm run demo --workspace=@travora/server",
     "test:server": "npm run test --workspace=apps/server",
     "test:client": "npm run test --workspace=apps/client",
     "test:contracts": "npm run test --workspace=packages/contracts",

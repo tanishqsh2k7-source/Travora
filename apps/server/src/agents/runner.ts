@@ -95,6 +95,19 @@ export async function executePlanningRun(
       },
       {
         configurable: { thread_id: run._id.toString() },
+        tags: [
+          "travora",
+          "planning",
+          trip.destination.toLowerCase().replace(/[^a-z0-9]/g, "-"),
+          replanRequest ? "replan" : "initial",
+        ],
+        metadata: {
+          runId: run._id.toString(),
+          tripId: trip._id.toString(),
+          userId: run.userId.toString(),
+          destination: trip.destination,
+          replan: Boolean(replanRequest),
+        },
       }
     );
 
