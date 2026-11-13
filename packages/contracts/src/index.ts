@@ -33,3 +33,6 @@ export * from "./validation.js";
 
 // Planning & Run Schemas (Phase 4)
 export * from "./planning.js";
+
+// Supervisor & Task Plan Schemas (Phase 5)
+export * from "./task-plan.js";

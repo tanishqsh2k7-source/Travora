@@ -11,6 +11,7 @@ import type {
   ValidationReport,
   PlanningRunStatus,
   FinalPlanResponse,
+  TaskPlan,
 } from "@travora/contracts";
 
 export const TravelStateAnnotation = Annotation.Root({
@@ -18,6 +19,10 @@ export const TravelStateAnnotation = Annotation.Root({
   tripId: Annotation<string>(),
   userId: Annotation<string>(),
   request: Annotation<CreateTripRequest>(),
+  taskPlan: Annotation<TaskPlan | undefined>({
+    reducer: (_, next) => next,
+    default: () => undefined,
+  }),
   preferences: Annotation<UserPreferences>({
     reducer: (_, next) => next,
     default: () => ({

@@ -1,22 +1,55 @@
 import { StateGraph, START, END, MemorySaver } from "@langchain/langgraph";
 import { TravelStateAnnotation } from "./state.js";
 import { intakeNode } from "./nodes/intake.js";
-import { researchNode } from "./nodes/research.js";
+import { supervisorNode } from "./nodes/supervisor.js";
+import { destinationAgentNode } from "./nodes/destination-agent.js";
+import { flightsAgentNode } from "./nodes/flights-agent.js";
+import { hotelsAgentNode } from "./nodes/hotels-agent.js";
+import { weatherAgentNode } from "./nodes/weather-agent.js";
+import { mergeResultsNode } from "./nodes/merge-results.js";
 import { itineraryNode } from "./nodes/itinerary.js";
 import { aggregatorNode } from "./nodes/aggregator.js";
 
 export function createPlanningGraph(checkpointer = new MemorySaver()) {
   const workflow = new StateGraph(TravelStateAnnotation)
     .addNode("intake", intakeNode)
-    .addNode("research", researchNode)
+    .addNode("supervisor", supervisorNode)
+    .addNode("destination", destinationAgentNode)
+    .addNode("flights", flightsAgentNode)
+    .addNode("hotels", hotelsAgentNode)
+    .addNode("weather", weatherAgentNode)
+    .addNode("merge_results", mergeResultsNode)
     .addNode("itinerary", itineraryNode)
     .addNode("aggregator", aggregatorNode)
+    // Entry sequence
     .addEdge(START, "intake")
-    .addEdge("intake", "research")
-    .addEdge("research", "itinerary")
+    .addEdge("intake", "supervisor")
+    // Dynamic parallel fan-out from supervisor based on TaskPlan
+    .addConditionalEdges("supervisor", (state) => {
+      const plan = state.taskPlan;
+      const branches: Array<"destination" | "flights" | "hotels" | "weather"> = [
+        "destination",
+        "weather",
+      ];
+
+      if (plan?.requiredCapabilities.includes("flights")) {
+        branches.push("flights");
+      }
+      if (plan?.requiredCapabilities.includes("hotels")) {
+        branches.push("hotels");
+      }
+
+      return branches;
+    })
+    // Fan-in: all branches join at merge_results
+    .addEdge("destination", "merge_results")
+    .addEdge("flights", "merge_results")
+    .addEdge("hotels", "merge_results")
+    .addEdge("weather", "merge_results")
+    // Synthesis & aggregation
+    .addEdge("merge_results", "itinerary")
     .addEdge("itinerary", "aggregator")
     .addEdge("aggregator", END);
 
   return workflow.compile({ checkpointer });
 }
-
