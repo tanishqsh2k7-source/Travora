@@ -29,7 +29,7 @@ describe("Phase 4: First LangGraph Slice", () => {
     endDate: "2027-04-15", // 6 days
     timezone: "Asia/Tokyo",
     travellers: { adults: 2, children: 0, infants: 0 },
-    budget: { amount: 22000000, currency: "INR", flexibilityPct: 5 },
+    budget: { amount: 30000000, currency: "INR", flexibilityPct: 5 }, // ₹3,00,000
     interests: ["food", "anime", "museums"],
     travelStyle: "balanced",
     transportPreferences: ["public_transit"],
@@ -181,9 +181,9 @@ describe("Phase 4: First LangGraph Slice", () => {
     });
 
     it("lists historical planning runs on GET /trips/:tripId/runs", async () => {
-      // Start a run
+      // Start a run with ?sync=true
       const postRes = await request(app)
-        .post(`/api/v1/trips/${tripId}/plan`)
+        .post(`/api/v1/trips/${tripId}/plan?sync=true`)
         .set("Authorization", `Bearer ${userToken}`);
 
       const listRes = await request(app)
@@ -197,3 +197,4 @@ describe("Phase 4: First LangGraph Slice", () => {
     });
   });
 });
+

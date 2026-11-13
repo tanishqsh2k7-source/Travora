@@ -19,15 +19,19 @@ planningRouter.post("/trips/:tripId/plan", async (req, res, next) => {
 
     const run = await createPlanningRun(tripId, userId);
 
-    // Trigger async execution
-    executePlanningRun(run._id.toString()).catch((err) => {
-      console.error(`[planningRouter] Error executing run ${run._id}:`, err);
-    });
+    const execPromise = executePlanningRun(run._id.toString());
+    if (req.query.sync === "true") {
+      await execPromise;
+    } else {
+      execPromise.catch((err) => {
+        console.error(`[planningRouter] Error executing run ${run._id}:`, err);
+      });
+    }
 
     res.status(202).json({
       runId: run._id.toString(),
       tripId,
-      status: "queued",
+      status: req.query.sync === "true" ? "completed" : "queued",
       eventsUrl: `/api/v1/runs/${run._id.toString()}/events`,
     });
   } catch (err: unknown) {
@@ -133,3 +137,4 @@ planningRouter.get("/trips/:tripId/runs", async (req, res, next) => {
     next(err);
   }
 });
+

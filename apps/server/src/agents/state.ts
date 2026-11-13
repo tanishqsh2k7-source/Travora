@@ -78,3 +78,4 @@ export const TravelStateAnnotation = Annotation.Root({
 
 export type TravelState = typeof TravelStateAnnotation.State;
 export type TravelStateUpdate = typeof TravelStateAnnotation.Update;
+

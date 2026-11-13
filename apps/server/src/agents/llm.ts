@@ -46,3 +46,4 @@ export function getChatModel(): BaseChatModel {
 
   return new OfflineMockChatModel();
 }
+
