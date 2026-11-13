@@ -83,3 +83,4 @@ export function formatMoney(m: Money): string {
   const mainUnit = toDecimal(m.amount).dividedBy(100).toFixed(2);
   return `${m.currency} ${mainUnit}`;
 }
+

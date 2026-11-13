@@ -37,3 +37,4 @@ export const RouteOptimizerResultSchema = z.object({
   totalTravelTimeMin: z.number().int().nonnegative(),
 });
 export type RouteOptimizerResult = z.infer<typeof RouteOptimizerResultSchema>;
+

@@ -166,3 +166,4 @@ export function validateSchedule(input: ScheduleValidatorInput): ValidationRepor
     passedChecks,
   };
 }
+

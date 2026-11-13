@@ -21,3 +21,4 @@ export const ValidationReportSchema = z.object({
   passedChecks: z.array(z.string()).default([]),
 });
 export type ValidationReport = z.infer<typeof ValidationReportSchema>;
+
