@@ -51,10 +51,16 @@ export async function aggregatorNode(state: TravelState): Promise<TravelStateUpd
       if (trip) {
         const nextVersionNo = (trip.currentVersionNo ?? 1) + 1;
 
+        const changeReason =
+          state.replanPatch?.changeSummary ??
+          (state.replanRequest
+            ? `Replanned for: ${state.replanRequest.instruction}`
+            : "Planning run generated complete itinerary");
+
         await TripVersionModel.create({
           tripId: trip._id,
           versionNo: nextVersionNo,
-          changeReason: "Planning run generated complete itinerary",
+          changeReason,
           createdByRunId: state.runId,
           itineraryData: finalResponse,
         });

@@ -1,6 +1,8 @@
 import { Router } from "express";
 import mongoose from "mongoose";
+import { ReplanRequestSchema } from "@travora/contracts";
 import { requireAuth } from "../middleware/auth.js";
+import { validateBody } from "../middleware/validate.js";
 import { PlanningRunModel, TripModel } from "../models/index.js";
 import { createPlanningRun, executePlanningRun } from "../agents/runner.js";
 
@@ -14,7 +16,7 @@ planningRouter.use(requireAuth);
  */
 planningRouter.post("/trips/:tripId/plan", async (req, res, next) => {
   try {
-    const { tripId } = req.params;
+    const tripId = Array.isArray(req.params.tripId) ? req.params.tripId[0] : req.params.tripId;
     const userId = req.user!.userId;
 
     const run = await createPlanningRun(tripId, userId);
@@ -52,6 +54,59 @@ planningRouter.post("/trips/:tripId/plan", async (req, res, next) => {
     next(err);
   }
 });
+
+/**
+ * POST /api/v1/trips/:tripId/replan
+ * Replan an itinerary following a disruption or user modification request.
+ */
+const handleReplan = async (
+  req: import("express").Request,
+  res: import("express").Response,
+  next: import("express").NextFunction
+): Promise<void> => {
+  try {
+    const tripId = Array.isArray(req.params.tripId) ? req.params.tripId[0] : req.params.tripId;
+    const userId = req.user!.userId;
+    const replanRequest = req.body;
+
+    const run = await createPlanningRun(tripId, userId);
+
+    const execPromise = executePlanningRun(run._id.toString(), replanRequest);
+    if (req.query.sync === "true") {
+      await execPromise;
+    } else {
+      execPromise.catch((err) => {
+        console.error(`[planningRouter] Error executing replan run ${run._id}:`, err);
+      });
+    }
+
+    res.status(202).json({
+      runId: run._id.toString(),
+      tripId,
+      status: req.query.sync === "true" ? "completed" : "queued",
+      eventsUrl: `/api/v1/runs/${run._id.toString()}/events`,
+    });
+  } catch (err: unknown) {
+    if (err instanceof Error) {
+      if (err.message.includes("Access denied")) {
+        res.status(403).json({ error: err.message });
+        return;
+      }
+      if (err.message.includes("not found")) {
+        res.status(404).json({ error: err.message });
+        return;
+      }
+      if (err.message.includes("Invalid trip ID")) {
+        res.status(400).json({ error: err.message });
+        return;
+      }
+    }
+    next(err);
+  }
+};
+
+planningRouter.post("/trips/:tripId/replan", validateBody(ReplanRequestSchema), handleReplan);
+planningRouter.post("/trips/:tripId/refine", validateBody(ReplanRequestSchema), handleReplan);
 
 /**
  * GET /api/v1/runs/:runId
@@ -101,7 +156,7 @@ planningRouter.get("/runs/:runId", async (req, res, next) => {
  */
 planningRouter.get("/trips/:tripId/runs", async (req, res, next) => {
   try {
-    const { tripId } = req.params;
+    const tripId = Array.isArray(req.params.tripId) ? req.params.tripId[0] : req.params.tripId;
     const userId = req.user!.userId;
 
     if (!mongoose.Types.ObjectId.isValid(tripId)) {

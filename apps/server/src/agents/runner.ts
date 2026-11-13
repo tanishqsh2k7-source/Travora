@@ -1,11 +1,14 @@
 import mongoose from "mongoose";
 import { TripModel, UserPreferenceModel, PlanningRunModel, type IPlanningRun } from "../models/index.js";
 import { createPlanningGraph } from "./graph.js";
-import type { CreateTripRequest, UserPreferences } from "@travora/contracts";
+import type { CreateTripRequest, UserPreferences, ReplanRequest } from "@travora/contracts";
 
 const graph = createPlanningGraph();
 
-export async function executePlanningRun(runId: string): Promise<void> {
+export async function executePlanningRun(
+  runId: string,
+  replanRequest?: ReplanRequest
+): Promise<void> {
   const run = await PlanningRunModel.findById(runId);
   if (!run) return;
 
@@ -64,6 +67,7 @@ export async function executePlanningRun(runId: string): Promise<void> {
         userId: run.userId.toString(),
         request: tripRequest,
         preferences,
+        replanRequest,
         status: "running",
         warnings: [],
       },

@@ -36,3 +36,6 @@ export * from "./planning.js";
 
 // Supervisor & Task Plan Schemas (Phase 5)
 export * from "./task-plan.js";
+
+// Critic & Replanning Schemas (Phase 6)
+export * from "./replanning.js";
