@@ -30,3 +30,6 @@ export * from "./hotels.js";
 export * from "./budget.js";
 export * from "./optimization.js";
 export * from "./validation.js";
+
+// Planning & Run Schemas (Phase 4)
+export * from "./planning.js";

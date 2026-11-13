@@ -6,6 +6,7 @@ import { getConnectionStatus } from "./db.js";
 import { authRouter } from "./routes/auth.js";
 import { tripsRouter } from "./routes/trips.js";
 import { preferencesRouter } from "./routes/preferences.js";
+import { planningRouter } from "./routes/planning.js";
 
 export function createApp() {
   const app = express();
@@ -39,6 +40,7 @@ export function createApp() {
   app.use("/api/v1/auth", authRouter);
   app.use("/api/v1/trips", tripsRouter);
   app.use("/api/v1/me/preferences", preferencesRouter);
+  app.use("/api/v1", planningRouter);
 
   // ── Root redirect ──────────────────────────────────────
   app.get("/", (_req, res) => {
