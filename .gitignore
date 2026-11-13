@@ -1,9 +1,0 @@
-.env
-**/.env
-!.env.example
-**/__pycache__/
-*.py[cod]
-backend/.venv/
-backend/travel_planner.db
-frontend/node_modules/
-frontend/dist/
