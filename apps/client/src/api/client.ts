@@ -37,6 +37,30 @@ export interface PlanningRunResponse {
   result?: FinalPlanResponse;
 }
 
+export interface TripVersionSummary {
+  id: string;
+  tripId: string;
+  versionNo: number;
+  changeReason?: string;
+  createdAt: string;
+  hasItinerary: boolean;
+}
+
+export interface TripVersionDetail extends TripVersionSummary {
+  itineraryData?: FinalPlanResponse;
+}
+
+export interface UserPreferencesResponse {
+  userId: string;
+  interests: string[];
+  travelStyle: string;
+  pace: string;
+  dietaryRestrictions: string[];
+  accessibilityRequirements: string[];
+  preferredCurrency: string;
+  transportPreferences: string[];
+}
+
 const TOKEN_KEY = "travora_token";
 
 export function getStoredToken(): string | null {
@@ -181,6 +205,49 @@ export async function startReplanning(
 export async function getPlanningRun(runId: string): Promise<PlanningRunResponse> {
   const res = await authFetch(`/api/v1/runs/${runId}`);
   if (!res.ok) throw new Error("Failed to fetch planning run");
+  return res.json();
+}
+
+export async function getPreferences(): Promise<UserPreferencesResponse> {
+  const res = await authFetch("/api/v1/me/preferences");
+  if (!res.ok) throw new Error("Failed to fetch user preferences");
+  return res.json();
+}
+
+export async function updatePreferences(
+  updates: Partial<UserPreferencesResponse>
+): Promise<UserPreferencesResponse> {
+  const res = await authFetch("/api/v1/me/preferences", {
+    method: "PATCH",
+    body: JSON.stringify(updates),
+  });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.error || "Failed to update user preferences");
+  }
+  return res.json();
+}
+
+export async function getTripVersions(tripId: string): Promise<TripVersionSummary[]> {
+  const res = await authFetch(`/api/v1/trips/${tripId}/versions`);
+  if (!res.ok) throw new Error("Failed to fetch trip versions");
+  return res.json();
+}
+
+export async function getTripVersion(tripId: string, versionNo: number): Promise<TripVersionDetail> {
+  const res = await authFetch(`/api/v1/trips/${tripId}/versions/${versionNo}`);
+  if (!res.ok) throw new Error("Failed to fetch version detail");
+  return res.json();
+}
+
+export async function restoreTripVersion(
+  tripId: string,
+  versionNo: number
+): Promise<{ message: string; trip: TripResponse; version: TripVersionDetail }> {
+  const res = await authFetch(`/api/v1/trips/${tripId}/versions/${versionNo}/restore`, {
+    method: "POST",
+  });
+  if (!res.ok) throw new Error("Failed to restore version");
   return res.json();
 }
 

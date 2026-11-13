@@ -142,8 +142,123 @@ tripsRouter.get("/:tripId/versions", async (req, res, next) => {
         versionNo: v.versionNo,
         changeReason: v.changeReason,
         createdAt: v.createdAt.toISOString(),
+        hasItinerary: Boolean(v.itineraryData && Object.keys(v.itineraryData).length > 0),
       }))
     );
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * GET /api/v1/trips/:tripId/versions/:versionNo
+ * Retrieve full plan payload for a specific trip version.
+ */
+tripsRouter.get("/:tripId/versions/:versionNo", async (req, res, next) => {
+  try {
+    const { tripId, versionNo } = req.params;
+    const currentUserId = req.user!.userId;
+
+    if (!mongoose.Types.ObjectId.isValid(tripId)) {
+      res.status(400).json({ error: "Invalid trip ID format" });
+      return;
+    }
+
+    const versionNumber = parseInt(versionNo, 10);
+    if (isNaN(versionNumber) || versionNumber < 1) {
+      res.status(400).json({ error: "Invalid version number" });
+      return;
+    }
+
+    const trip = await TripModel.findById(tripId);
+    if (!trip) {
+      res.status(404).json({ error: "Trip not found" });
+      return;
+    }
+
+    if (trip.userId.toString() !== currentUserId) {
+      res.status(403).json({ error: "Access denied to this trip" });
+      return;
+    }
+
+    const version = await TripVersionModel.findOne({
+      tripId: trip._id,
+      versionNo: versionNumber,
+    });
+
+    if (!version) {
+      res.status(404).json({ error: "Trip version not found" });
+      return;
+    }
+
+    res.json({
+      id: version._id.toString(),
+      tripId: version.tripId.toString(),
+      versionNo: version.versionNo,
+      changeReason: version.changeReason,
+      itineraryData: version.itineraryData,
+      createdAt: version.createdAt.toISOString(),
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * POST /api/v1/trips/:tripId/versions/:versionNo/restore
+ * Restores a specific historical version as the active trip version.
+ */
+tripsRouter.post("/:tripId/versions/:versionNo/restore", async (req, res, next) => {
+  try {
+    const { tripId, versionNo } = req.params;
+    const currentUserId = req.user!.userId;
+
+    if (!mongoose.Types.ObjectId.isValid(tripId)) {
+      res.status(400).json({ error: "Invalid trip ID format" });
+      return;
+    }
+
+    const versionNumber = parseInt(versionNo, 10);
+    if (isNaN(versionNumber) || versionNumber < 1) {
+      res.status(400).json({ error: "Invalid version number" });
+      return;
+    }
+
+    const trip = await TripModel.findById(tripId);
+    if (!trip) {
+      res.status(404).json({ error: "Trip not found" });
+      return;
+    }
+
+    if (trip.userId.toString() !== currentUserId) {
+      res.status(403).json({ error: "Access denied to this trip" });
+      return;
+    }
+
+    const targetVersion = await TripVersionModel.findOne({
+      tripId: trip._id,
+      versionNo: versionNumber,
+    });
+
+    if (!targetVersion) {
+      res.status(404).json({ error: "Target trip version not found" });
+      return;
+    }
+
+    trip.currentVersionNo = versionNumber;
+    await trip.save();
+
+    res.json({
+      message: `Restored version ${versionNumber} as active version`,
+      trip: formatTrip(trip),
+      version: {
+        id: targetVersion._id.toString(),
+        versionNo: targetVersion.versionNo,
+        changeReason: targetVersion.changeReason,
+        itineraryData: targetVersion.itineraryData,
+        createdAt: targetVersion.createdAt.toISOString(),
+      },
+    });
   } catch (err) {
     next(err);
   }

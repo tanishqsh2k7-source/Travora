@@ -13,19 +13,29 @@ import { ItineraryView } from "./components/ItineraryView";
 import { BudgetView } from "./components/BudgetView";
 import { MapStopList } from "./components/MapStopList";
 import { ReplanModal } from "./components/ReplanModal";
+import { PreferencesModal } from "./components/PreferencesModal";
+import { VersionHistoryView } from "./components/VersionHistoryView";
 import {
   ensureAuth,
   createTrip,
+  getTrip,
   startPlanning,
   startReplanning,
   subscribeToRunEvents,
   type TripResponse,
+  type TripVersionDetail,
 } from "./api/client";
-import { SparklesIcon, CalendarIcon, CurrencyIcon, MapPinIcon } from "./components/Icons";
+import {
+  SparklesIcon,
+  CalendarIcon,
+  CurrencyIcon,
+  MapPinIcon,
+  RefreshIcon,
+} from "./components/Icons";
 import "./styles/app.css";
 
 type AppView = "builder" | "planning" | "view";
-type PlanTab = "itinerary" | "budget" | "map" | "terminal";
+type PlanTab = "itinerary" | "budget" | "map" | "versions" | "terminal";
 
 export function App() {
   const [currentView, setCurrentView] = useState<AppView>("builder");
@@ -43,6 +53,7 @@ export function App() {
   const [errorMsg, setErrorMsg] = useState<string | undefined>();
 
   const [isReplanModalOpen, setIsReplanModalOpen] = useState(false);
+  const [isPreferencesModalOpen, setIsPreferencesModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   // Initialize auth
@@ -73,7 +84,7 @@ export function App() {
       const unsubscribe = subscribeToRunEvents(
         runInfo.runId,
         token,
-        (event: AgentEvent) => {
+        async (event: AgentEvent) => {
           setEvents((prev) => [...prev, event]);
           setPlanningStage(event.stage);
           setProgressPct(event.progress);
@@ -83,6 +94,11 @@ export function App() {
             if (event.payload?.result) {
               setPlanResult(event.payload.result as FinalPlanResponse);
             }
+            // Refresh trip metadata
+            try {
+              const refreshed = await getTrip(trip.id);
+              setActiveTrip(refreshed);
+            } catch {}
           } else if (event.type === "run.failed") {
             setPlanningStatus("failed");
             setErrorMsg(event.message);
@@ -122,7 +138,7 @@ export function App() {
       const unsubscribe = subscribeToRunEvents(
         runInfo.runId,
         token,
-        (event: AgentEvent) => {
+        async (event: AgentEvent) => {
           setEvents((prev) => [...prev, event]);
           setPlanningStage(event.stage);
           setProgressPct(event.progress);
@@ -132,6 +148,11 @@ export function App() {
             if (event.payload?.result) {
               setPlanResult(event.payload.result as FinalPlanResponse);
             }
+            // Refresh trip metadata so currentVersionNo is updated
+            try {
+              const refreshed = await getTrip(activeTrip.id);
+              setActiveTrip(refreshed);
+            } catch {}
           } else if (event.type === "run.failed") {
             setPlanningStatus("failed");
             setErrorMsg(event.message);
@@ -152,11 +173,25 @@ export function App() {
     }
   };
 
+  const handleVersionRestored = (versionDetail: TripVersionDetail) => {
+    if (versionDetail.itineraryData) {
+      setPlanResult(versionDetail.itineraryData as FinalPlanResponse);
+    }
+    if (activeTrip) {
+      setActiveTrip({
+        ...activeTrip,
+        currentVersionNo: versionDetail.versionNo,
+      });
+    }
+    setActiveTab("itinerary");
+  };
+
   return (
     <div className="app-container">
       <Navbar
         onNewTrip={() => setCurrentView("builder")}
         hasActiveTrip={currentView !== "builder" && planResult !== null}
+        onOpenPreferences={() => setIsPreferencesModalOpen(true)}
       />
 
       <main className="main-content">
@@ -203,7 +238,7 @@ export function App() {
           />
         )}
 
-        {currentView === "view" && planResult && (
+        {currentView === "view" && planResult && activeTrip && (
           <div className="plan-view-container">
             {/* View navigation bar */}
             <div className="plan-tabs-bar">
@@ -225,6 +260,12 @@ export function App() {
                   onClick={() => setActiveTab("map")}
                 >
                   <MapPinIcon className="w-4 h-4" /> Route & Stops
+                </button>
+                <button
+                  className={`plan-tab-btn ${activeTab === "versions" ? "active" : ""}`}
+                  onClick={() => setActiveTab("versions")}
+                >
+                  <RefreshIcon className="w-4 h-4" /> Version Lineage (v{activeTrip.currentVersionNo})
                 </button>
                 <button
                   className={`plan-tab-btn ${activeTab === "terminal" ? "active" : ""}`}
@@ -256,6 +297,14 @@ export function App() {
 
             {activeTab === "map" && (
               <MapStopList days={planResult.itinerary} />
+            )}
+
+            {activeTab === "versions" && (
+              <VersionHistoryView
+                tripId={activeTrip.id}
+                currentVersionNo={activeTrip.currentVersionNo}
+                onVersionRestored={handleVersionRestored}
+              />
             )}
 
             {activeTab === "terminal" && (
@@ -291,6 +340,12 @@ export function App() {
         onClose={() => setIsReplanModalOpen(false)}
         onSubmit={handleExecuteReplan}
         totalDays={planResult?.itinerary?.length ?? 3}
+      />
+
+      {/* User Preferences Modal */}
+      <PreferencesModal
+        isOpen={isPreferencesModalOpen}
+        onClose={() => setIsPreferencesModalOpen(false)}
       />
     </div>
   );

@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import type { CreateTripRequest, TravelStyle, TransportPreference } from "@travora/contracts";
+import { getPreferences } from "../api/client";
 import { SparklesIcon, CalendarIcon, MapPinIcon, CurrencyIcon } from "./Icons";
 
 interface TripBuilderProps {
@@ -90,6 +91,22 @@ export function TripBuilder({ onSubmit, isLoading }: TripBuilderProps) {
   ]);
   const [pace, setPace] = useState<"relaxed" | "moderate" | "fast">("moderate");
   const [dietary, setDietary] = useState("");
+
+  useEffect(() => {
+    getPreferences()
+      .then((pref) => {
+        if (pref.preferredCurrency) setCurrency(pref.preferredCurrency);
+        if (pref.travelStyle) setTravelStyle(pref.travelStyle as TravelStyle);
+        if (pref.pace) setPace(pref.pace as any);
+        if (pref.dietaryRestrictions && pref.dietaryRestrictions.length > 0) {
+          setDietary(pref.dietaryRestrictions.join(", "));
+        }
+        if (pref.interests && pref.interests.length > 0) {
+          setSelectedInterests(pref.interests);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const applyPreset = (preset: (typeof PRESETS)[0]) => {
     const d = preset.data;

@@ -4,9 +4,10 @@ import { SparklesIcon } from "./Icons";
 interface NavbarProps {
   onNewTrip: () => void;
   hasActiveTrip: boolean;
+  onOpenPreferences: () => void;
 }
 
-export function Navbar({ onNewTrip, hasActiveTrip }: NavbarProps) {
+export function Navbar({ onNewTrip, hasActiveTrip, onOpenPreferences }: NavbarProps) {
   return (
     <header className="navbar">
       <div className="navbar-container">
@@ -26,10 +27,14 @@ export function Navbar({ onNewTrip, hasActiveTrip }: NavbarProps) {
               + Plan New Trip
             </button>
           )}
-          <div className="user-pill">
+          <button
+            className="user-pill user-pill-btn"
+            onClick={onOpenPreferences}
+            title="Manage traveler profile & preferences"
+          >
             <span className="user-dot"></span>
-            <span>Demo Guest</span>
-          </div>
+            <span>Preferences</span>
+          </button>
         </div>
       </div>
     </header>

@@ -202,6 +202,54 @@ describe("Trips API (/api/v1/trips)", () => {
       expect(res.body[0].versionNo).toBe(1);
       expect(res.body[0].changeReason).toContain("Initial trip request");
     });
+
+    it("retrieves a specific version and restores an earlier version", async () => {
+      const createRes = await request(app)
+        .post("/api/v1/trips")
+        .set("Authorization", `Bearer ${user1Token}`)
+        .send(validTripPayload);
+
+      const tripId = createRes.body.id;
+
+      // Create a second version directly or through TripVersionModel
+      const { TripVersionModel } = await import("../models/index.js");
+      await TripVersionModel.create({
+        tripId,
+        versionNo: 2,
+        changeReason: "Second version with museum additions",
+        itineraryData: { summary: "Version 2 test data" },
+      });
+
+      // GET specific version
+      const v2Res = await request(app)
+        .get(`/api/v1/trips/${tripId}/versions/2`)
+        .set("Authorization", `Bearer ${user1Token}`);
+
+      expect(v2Res.status).toBe(200);
+      expect(v2Res.body.versionNo).toBe(2);
+      expect(v2Res.body.changeReason).toBe("Second version with museum additions");
+      expect(v2Res.body.itineraryData).toEqual({ summary: "Version 2 test data" });
+
+      // Non-existent version returns 404
+      const v99Res = await request(app)
+        .get(`/api/v1/trips/${tripId}/versions/99`)
+        .set("Authorization", `Bearer ${user1Token}`);
+      expect(v99Res.status).toBe(404);
+
+      // Intruder returns 403
+      const intruderRes = await request(app)
+        .get(`/api/v1/trips/${tripId}/versions/2`)
+        .set("Authorization", `Bearer ${user2Token}`);
+      expect(intruderRes.status).toBe(403);
+
+      // POST restore version 2
+      const restoreRes = await request(app)
+        .post(`/api/v1/trips/${tripId}/versions/2/restore`)
+        .set("Authorization", `Bearer ${user1Token}`);
+
+      expect(restoreRes.status).toBe(200);
+      expect(restoreRes.body.trip.currentVersionNo).toBe(2);
+    });
   });
 
   describe("Preferences API (/api/v1/me/preferences)", () => {
