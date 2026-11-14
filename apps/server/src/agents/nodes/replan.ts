@@ -81,6 +81,7 @@ export async function replanNode(state: TravelState): Promise<TravelStateUpdate>
     dayNumber: affectedDayNum,
     date: originalDay.date,
     theme: "Indoor Culture & Art Exploration (Rain-Adapted)",
+    accommodation: originalDay.accommodation,
   };
 
   // 3. Assemble new itinerary: PRESERVE unaffected days!

@@ -1,9 +1,20 @@
 import { z } from "zod";
-import { CoordinatesSchema } from "./common.js";
+import { CoordinatesSchema, MoneySchema } from "./common.js";
 import { PlaceCandidateSchema } from "./places.js";
 
-export const ScheduledStopTypeSchema = z.enum(["activity", "meal", "transfer", "buffer"]);
+export const ScheduledStopTypeSchema = z.enum(["activity", "meal", "transfer", "buffer", "lodging"]);
 export type ScheduledStopType = z.infer<typeof ScheduledStopTypeSchema>;
+
+export const DayAccommodationInfoSchema = z.object({
+  hotelId: z.string().optional(),
+  name: z.string(),
+  address: z.string(),
+  rating: z.number().optional(),
+  pricePerNight: MoneySchema.optional(),
+  status: z.enum(["check_in", "staying", "switch_hotel", "check_out"]).default("staying"),
+  notes: z.string().optional(),
+});
+export type DayAccommodationInfo = z.infer<typeof DayAccommodationInfoSchema>;
 
 export const ScheduledStopSchema = z.object({
   id: z.string(),
@@ -27,6 +38,7 @@ export const OptimizedDayScheduleSchema = z.object({
   stops: z.array(ScheduledStopSchema),
   totalTravelTimeMin: z.number().int().nonnegative(),
   totalActivityTimeMin: z.number().int().nonnegative(),
+  accommodation: DayAccommodationInfoSchema.optional(),
 });
 export type OptimizedDaySchedule = z.infer<typeof OptimizedDayScheduleSchema>;
 

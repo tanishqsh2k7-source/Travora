@@ -850,6 +850,242 @@ body {
   color: var(--text-secondary);
 }
 
+/* ── Daily Accommodation Banner ── */
+.day-hotel-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 1rem 1.25rem;
+  margin-bottom: 0.75rem;
+  transition: all 0.2s ease;
+}
+
+.day-hotel-banner.status-check_in {
+  border-left: 4px solid var(--accent-emerald);
+  background: linear-gradient(90deg, rgba(16, 185, 129, 0.08) 0%, var(--bg-secondary) 100%);
+}
+
+.day-hotel-banner.status-switch_hotel {
+  border-left: 4px solid var(--accent-amber);
+  background: linear-gradient(90deg, rgba(245, 158, 11, 0.1) 0%, var(--bg-secondary) 100%);
+}
+
+.day-hotel-banner.status-check_out {
+  border-left: 4px solid var(--accent-primary);
+  background: linear-gradient(90deg, rgba(99, 102, 241, 0.08) 0%, var(--bg-secondary) 100%);
+}
+
+.day-hotel-banner.status-staying {
+  border-left: 4px solid #6b7280;
+}
+
+.hotel-banner-left {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  flex: 1;
+}
+
+.hotel-banner-icon-box {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(99, 102, 241, 0.12);
+  color: var(--accent-primary);
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+}
+
+.hotel-banner-icon-box.icon-check_in {
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--accent-emerald);
+}
+
+.hotel-banner-icon-box.icon-switch_hotel {
+  background: rgba(245, 158, 11, 0.15);
+  color: var(--accent-amber);
+}
+
+.hotel-banner-icon-box.icon-check_out {
+  background: rgba(99, 102, 241, 0.15);
+  color: #818cf8;
+}
+
+.hotel-banner-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  flex: 1;
+}
+
+.hotel-banner-tag-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.hotel-status-tag {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  padding: 0.15rem 0.55rem;
+  border-radius: 9999px;
+}
+
+.hotel-status-tag.tag-check_in {
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.hotel-status-tag.tag-switch_hotel {
+  background: rgba(245, 158, 11, 0.15);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.hotel-status-tag.tag-check_out {
+  background: rgba(99, 102, 241, 0.15);
+  color: #818cf8;
+  border: 1px solid rgba(99, 102, 241, 0.3);
+}
+
+.hotel-status-tag.tag-staying {
+  background: rgba(107, 114, 128, 0.2);
+  color: #d1d5db;
+  border: 1px solid rgba(107, 114, 128, 0.3);
+}
+
+.hotel-rating-pill {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--accent-amber);
+  background: rgba(245, 158, 11, 0.1);
+  padding: 0.15rem 0.45rem;
+  border-radius: 9999px;
+}
+
+.hotel-banner-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.hotel-banner-address {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.hotel-banner-notes {
+  font-size: 0.8rem;
+  color: #93c5fd;
+  font-weight: 500;
+  margin-top: 0.15rem;
+}
+
+.hotel-banner-price {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.hotel-banner-price .price-val {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--accent-emerald);
+}
+
+.hotel-banner-price .price-unit {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+/* ── Time Window & Timeline Cards ── */
+.activity-time-window {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.activity-time-window .time-start {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.activity-time-window .time-sep {
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  line-height: 1;
+  margin: 2px 0;
+}
+
+.activity-time-window .time-end {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.activity-card-lodging {
+  border-left: 3px solid #8b5cf6 !important;
+  background: linear-gradient(90deg, rgba(139, 92, 246, 0.08) 0%, var(--bg-secondary) 100%) !important;
+}
+
+.activity-card-meal {
+  border-left: 3px solid var(--accent-amber) !important;
+  background: linear-gradient(90deg, rgba(245, 158, 11, 0.06) 0%, var(--bg-secondary) 100%) !important;
+}
+
+.activity-title-group {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.inline-icon {
+  flex-shrink: 0;
+}
+
+.badge-lodging {
+  background: rgba(139, 92, 246, 0.15) !important;
+  color: #c4b5fd !important;
+  border: 1px solid rgba(139, 92, 246, 0.35) !important;
+}
+
+.badge-meal {
+  background: rgba(245, 158, 11, 0.15) !important;
+  color: #fcd34d !important;
+  border: 1px solid rgba(245, 158, 11, 0.35) !important;
+}
+
+.badge-activity {
+  background: rgba(99, 102, 241, 0.12) !important;
+  color: #818cf8 !important;
+  border: 1px solid rgba(99, 102, 241, 0.25) !important;
+}
+
+.cost-lodging {
+  color: #c4b5fd !important;
+}
+
 /* Timeline */
 .timeline-container {
   display: flex;
@@ -877,7 +1113,7 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-width: 80px;
+  min-width: 115px;
   border-right: 1px solid var(--border-color);
   padding-right: 1.25rem;
 }

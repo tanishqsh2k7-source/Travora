@@ -12,7 +12,7 @@ import {
   optimizeRoutes,
   validateSchedule,
 } from "../engines/index.js";
-import type { PlaceCandidate, OptimizedDaySchedule } from "@travora/contracts";
+import type { PlaceCandidate, OptimizedDaySchedule, HotelOffer } from "@travora/contracts";
 
 describe("Phase 3: Deterministic Engines", () => {
   describe("Currency & Exact Money Service", () => {
@@ -249,6 +249,91 @@ describe("Phase 3: Deterministic Engines", () => {
       const mealStop = day1.stops.find((s) => s.type === "meal");
       expect(mealStop).toBeDefined();
       expect(mealStop?.name).toContain("Lunch");
+    });
+
+    it("schedules dynamic daily accommodation, hotel switch, and lodging stops for multi-city / 5-day trips", () => {
+      const mockHotels: HotelOffer[] = [
+        {
+          id: "hotel_tokyo_shinjuku",
+          name: "Park Hyatt Tokyo",
+          address: "3-7-1-2 Nishi-Shinjuku, Shinjuku City, Tokyo",
+          coordinates: { lat: 35.685, lng: 139.691 },
+          pricePerNight: { amount: 35000, currency: "USD" },
+          totalPrice: { amount: 105000, currency: "USD" },
+          nights: 3,
+          amenities: ["WiFi", "Pool"],
+          cancellationPolicy: "Free cancellation",
+          rating: 4.8,
+          hotelStyle: "luxury",
+          provider: "booking_com",
+          fetchedAt: "2027-04-10T00:00:00Z",
+        },
+        {
+          id: "hotel_tokyo_ginza",
+          name: "The Tokyo Edition Ginza",
+          address: "2-8-13 Ginza, Chuo City, Tokyo",
+          coordinates: { lat: 35.672, lng: 139.768 },
+          pricePerNight: { amount: 42000, currency: "USD" },
+          totalPrice: { amount: 84000, currency: "USD" },
+          nights: 2,
+          amenities: ["WiFi", "Spa"],
+          cancellationPolicy: "Free cancellation",
+          rating: 4.9,
+          hotelStyle: "luxury",
+          provider: "liteapi",
+          fetchedAt: "2027-04-10T00:00:00Z",
+        },
+      ];
+
+      const result = optimizeRoutes({
+        places: samplePlaces,
+        daysCount: 5,
+        pace: "moderate",
+        travelDates: ["2027-04-10", "2027-04-11", "2027-04-12", "2027-04-13", "2027-04-14"],
+        hotels: mockHotels,
+      });
+
+      expect(result.days.length).toBe(5);
+
+      // Day 1: Check-in at Hotel 1
+      const day1 = result.days[0];
+      expect(day1.accommodation).toBeDefined();
+      expect(day1.accommodation?.status).toBe("check_in");
+      expect(day1.accommodation?.name).toBe("Park Hyatt Tokyo");
+      const checkinStop = day1.stops.find((s) => s.type === "lodging");
+      expect(checkinStop).toBeDefined();
+      expect(checkinStop?.name).toContain("Hotel Check-in");
+
+      // Day 2 & 3: Staying at Hotel 1
+      expect(result.days[1].accommodation?.status).toBe("staying");
+      expect(result.days[1].accommodation?.name).toBe("Park Hyatt Tokyo");
+      expect(result.days[2].accommodation?.status).toBe("staying");
+      expect(result.days[2].accommodation?.name).toBe("Park Hyatt Tokyo");
+
+      // Day 4: Switch Hotel to Ginza base
+      const day4 = result.days[3];
+      expect(day4.accommodation?.status).toBe("switch_hotel");
+      expect(day4.accommodation?.name).toBe("The Tokyo Edition Ginza");
+      const switchStop = day4.stops.find((s) => s.type === "lodging");
+      expect(switchStop).toBeDefined();
+      expect(switchStop?.name).toContain("Hotel Switch");
+
+      // Day 5: Final Check-out from Ginza base
+      const day5 = result.days[4];
+      expect(day5.accommodation?.status).toBe("check_out");
+      expect(day5.accommodation?.name).toBe("The Tokyo Edition Ginza");
+      const checkoutStop = day5.stops.find((s) => s.type === "lodging");
+      expect(checkoutStop).toBeDefined();
+      expect(checkoutStop?.name).toContain("Hotel Check-out");
+
+      // All stops across all 5 days have startLocal and endLocal in valid HH:MM format
+      for (const day of result.days) {
+        for (const stop of day.stops) {
+          expect(stop.startLocal).toMatch(/^\d{2}:\d{2}$/);
+          expect(stop.endLocal).toMatch(/^\d{2}:\d{2}$/);
+          expect(stop.durationMin).toBeGreaterThan(0);
+        }
+      }
     });
   });
 

@@ -5,6 +5,7 @@ import type {
   RouteOptimizerResult,
   OptimizedDaySchedule,
   ScheduledStop,
+  HotelOffer,
 } from "@travora/contracts";
 import { haversineDistanceMeters, estimateDurationSeconds } from "../providers/fixtures/routes.fixture.js";
 
@@ -16,6 +17,7 @@ export interface RouteOptimizerInput {
   dayStartTime?: string; // "09:00"
   dayEndTime?: string; // "18:30"
   hotelCoordinates?: Coordinates;
+  hotels?: HotelOffer[];
 }
 
 function parseTimeToMinutes(timeStr: string): number {
@@ -158,14 +160,83 @@ export function optimizeRoutes(input: RouteOptimizerInput): RouteOptimizerResult
     const date = input.travelDates[dayIdx] ?? new Date().toISOString().split("T")[0];
     const cluster = clusters[dayIdx] ?? [];
 
+    // Determine hotel and accommodation status for this day
+    const availableHotels = input.hotels ?? [];
+    let dayHotel: HotelOffer | undefined = undefined;
+    let hotelStatus: "check_in" | "staying" | "switch_hotel" | "check_out" = "staying";
+    let hotelNotes = "";
+
+    if (availableHotels.length > 0) {
+      const numHotelsToUse = Math.min(availableHotels.length, Math.max(1, Math.floor(daysCount / 2)));
+      const daysPerHotel = Math.ceil(daysCount / numHotelsToUse);
+      const hotelIdx = Math.min(numHotelsToUse - 1, Math.floor(dayIdx / daysPerHotel));
+      const prevHotelIdx = dayIdx > 0 ? Math.min(numHotelsToUse - 1, Math.floor((dayIdx - 1) / daysPerHotel)) : -1;
+
+      dayHotel = availableHotels[hotelIdx];
+
+      if (dayIdx === 0) {
+        hotelStatus = "check_in";
+        hotelNotes = `Check-in at ${dayHotel.name} (from 15:00) • City base stay`;
+      } else if (dayIdx + 1 === daysCount) {
+        hotelStatus = "check_out";
+        hotelNotes = `Check-out by 11:00 AM from ${dayHotel.name} • Concierge luggage storage available`;
+      } else if (prevHotelIdx !== -1 && prevHotelIdx !== hotelIdx) {
+        hotelStatus = "switch_hotel";
+        hotelNotes = `Check-out from ${availableHotels[prevHotelIdx].name} & transfer to ${dayHotel.name} • New district / city base`;
+      } else {
+        hotelStatus = "staying";
+        hotelNotes = `Night stay at ${dayHotel.name}`;
+      }
+    }
+
+    const currentHotelCoord = dayHotel?.coordinates ?? input.hotelCoordinates;
+
     // Order cluster with nearest neighbor heuristic
-    const ordered = orderStopsNearestNeighbor(cluster, input.hotelCoordinates);
+    const ordered = orderStopsNearestNeighbor(cluster, currentHotelCoord);
 
     let currentMinutes = startMinutesLimit;
-    let prevCoord = input.hotelCoordinates;
+    let prevCoord = currentHotelCoord;
     let totalDayTravelMin = 0;
     let totalDayActivityMin = 0;
     const stops: ScheduledStop[] = [];
+
+    // 1. Hotel switch morning check-out / luggage transfer
+    if (dayHotel && hotelStatus === "switch_hotel") {
+      const switchDuration = 45;
+      stops.push({
+        id: `lodging_switch_d${dayIdx + 1}`,
+        placeId: dayHotel.id,
+        name: `Hotel Switch: Transfer & Drop Bags at ${dayHotel.name}`,
+        coordinates: dayHotel.coordinates,
+        startLocal: formatMinutesToTime(currentMinutes),
+        endLocal: formatMinutesToTime(currentMinutes + switchDuration),
+        durationMin: switchDuration,
+        type: "lodging",
+        transferFromPrevMin: 0,
+        distanceFromPrevMeters: 2000,
+        notes: `Check-out from previous accommodation and drop luggage at ${dayHotel.name} (${dayHotel.address}).`,
+      });
+      currentMinutes += switchDuration;
+      totalDayActivityMin += switchDuration;
+    } else if (dayHotel && hotelStatus === "check_out" && daysCount > 1) {
+      // Final day morning check-out
+      const checkoutDuration = 30;
+      stops.push({
+        id: `lodging_checkout_d${dayIdx + 1}`,
+        placeId: dayHotel.id,
+        name: `Hotel Check-out: ${dayHotel.name}`,
+        coordinates: dayHotel.coordinates,
+        startLocal: formatMinutesToTime(currentMinutes),
+        endLocal: formatMinutesToTime(currentMinutes + checkoutDuration),
+        durationMin: checkoutDuration,
+        type: "lodging",
+        transferFromPrevMin: 0,
+        distanceFromPrevMeters: 0,
+        notes: `Check-out by 11:00 AM. Leave luggage at concierge until flight/departure transfer.`,
+      });
+      currentMinutes += checkoutDuration;
+      totalDayActivityMin += checkoutDuration;
+    }
 
     let stopsCount = 0;
     let hadLunch = false;
@@ -196,10 +267,11 @@ export function optimizeRoutes(input: RouteOptimizerInput): RouteOptimizerResult
           type: "meal",
           transferFromPrevMin: 0,
           distanceFromPrevMeters: 0,
-          notes: "Scheduled break for dining and relaxation",
+          notes: "Scheduled break for local dining and relaxation",
         });
 
         currentMinutes += lunchDuration;
+        totalDayActivityMin += lunchDuration;
         hadLunch = true;
       }
 
@@ -246,12 +318,43 @@ export function optimizeRoutes(input: RouteOptimizerInput): RouteOptimizerResult
       stopsCount++;
     }
 
+    // Day 1 afternoon/evening hotel check-in
+    if (dayHotel && hotelStatus === "check_in") {
+      const checkinDuration = 45;
+      const checkinStart = Math.max(startMinutesLimit, currentMinutes);
+      stops.push({
+        id: `lodging_checkin_d${dayIdx + 1}`,
+        placeId: dayHotel.id,
+        name: `Hotel Check-in & Settle in: ${dayHotel.name}`,
+        coordinates: dayHotel.coordinates,
+        startLocal: formatMinutesToTime(checkinStart),
+        endLocal: formatMinutesToTime(checkinStart + checkinDuration),
+        durationMin: checkinDuration,
+        type: "lodging",
+        transferFromPrevMin: 15,
+        distanceFromPrevMeters: 1000,
+        notes: `Check-in, receive room keys, and unpack at ${dayHotel.name}. Address: ${dayHotel.address}`,
+      });
+      totalDayActivityMin += checkinDuration;
+    }
+
     days.push({
       dayNumber: dayIdx + 1,
       date,
       stops,
       totalTravelTimeMin: totalDayTravelMin,
       totalActivityTimeMin: totalDayActivityMin,
+      accommodation: dayHotel
+        ? {
+            hotelId: dayHotel.id,
+            name: dayHotel.name,
+            address: dayHotel.address,
+            rating: dayHotel.rating,
+            pricePerNight: dayHotel.pricePerNight,
+            status: hotelStatus,
+            notes: hotelNotes,
+          }
+        : undefined,
     });
   }
 

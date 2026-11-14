@@ -37,6 +37,7 @@ export async function itineraryNode(state: TravelState): Promise<TravelStateUpda
     pace: req.constraints.pace ?? "moderate",
     travelDates,
     hotelCoordinates: selectedHotel?.coordinates,
+    hotels: state.hotelsResult ?? [],
   });
 
   // 3. Compute Budget
@@ -74,8 +75,12 @@ export async function itineraryNode(state: TravelState): Promise<TravelStateUpda
   const budgetResult = calculateBudget({
     userBudget: req.budget,
     flexibilityPct: req.budget.flexibilityPct ?? 5,
-    flightsTotal: selectedFlight?.price ?? { amount: 0, currency: req.budget.currency },
-    accommodationTotal: selectedHotel?.totalPrice ?? { amount: 0, currency: req.budget.currency },
+    flightsTotal: selectedFlight?.price
+      ? toTargetCurrency(selectedFlight.price, targetCurrency)
+      : { amount: 0, currency: req.budget.currency },
+    accommodationTotal: selectedHotel?.totalPrice
+      ? toTargetCurrency(selectedHotel.totalPrice, targetCurrency)
+      : { amount: 0, currency: req.budget.currency },
     dailyFoodAllowancePerPerson: dailyFoodPerPerson,
     dailyLocalTransportPerPerson: dailyTransportPerPerson,
     activityTickets,
