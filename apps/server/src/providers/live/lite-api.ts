@@ -34,11 +34,24 @@ export class LiteApiLiveAdapter implements IHotelsProvider {
     this.apiKey = apiKey ?? process.env.LITEAPI_KEY ?? "";
   }
 
-  private resolveCoordinates(destination: string, coordinates?: { lat: number; lng: number }): { lat: number; lng: number } {
+  private async resolveCoordinates(destination: string, coordinates?: { lat: number; lng: number }): Promise<{ lat: number; lng: number }> {
     if (coordinates?.lat && coordinates?.lng) return coordinates;
 
     const lower = destination.toLowerCase().trim();
     const cityCoords: Record<string, { lat: number; lng: number }> = {
+      china: { lat: 39.9042, lng: 116.4074 },
+      beijing: { lat: 39.9042, lng: 116.4074 },
+      shanghai: { lat: 31.2304, lng: 121.4737 },
+      guangzhou: { lat: 23.1291, lng: 113.2644 },
+      shenzhen: { lat: 22.5431, lng: 114.0579 },
+      chengdu: { lat: 30.5728, lng: 104.0668 },
+      "xi'an": { lat: 34.3416, lng: 108.9398 },
+      xian: { lat: 34.3416, lng: 108.9398 },
+      "hong kong": { lat: 22.3193, lng: 114.1694 },
+      laos: { lat: 17.9757, lng: 102.6331 },
+      loas: { lat: 17.9757, lng: 102.6331 },
+      vientiane: { lat: 17.9757, lng: 102.6331 },
+      "luang prabang": { lat: 19.8893, lng: 102.1347 },
       tokyo: { lat: 35.6762, lng: 139.6503 },
       kyoto: { lat: 35.0116, lng: 135.7681 },
       osaka: { lat: 34.6937, lng: 135.5023 },
@@ -58,13 +71,43 @@ export class LiteApiLiveAdapter implements IHotelsProvider {
       mumbai: { lat: 19.076, lng: 72.8777 },
       vienna: { lat: 48.2082, lng: 16.3738 },
       madrid: { lat: 40.4168, lng: -3.7038 },
+      bali: { lat: -8.4095, lng: 115.1889 },
+      seoul: { lat: 37.5665, lng: 126.978 },
+      hanoi: { lat: 21.0285, lng: 105.8542 },
+      "ho chi minh": { lat: 10.8231, lng: 106.6297 },
+      cairo: { lat: 30.0444, lng: 31.2357 },
     };
 
     for (const [key, coords] of Object.entries(cityCoords)) {
       if (lower.includes(key)) return coords;
     }
 
-    // Default to Tokyo if unknown
+    // Dynamic geocoding fallback via Google Places API if key available
+    const gKey = process.env.GOOGLE_MAPS_API_KEY;
+    if (gKey) {
+      try {
+        const gRes = await fetch("https://places.googleapis.com/v1/places:searchText", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Goog-Api-Key": gKey,
+            "X-Goog-FieldMask": "places.location",
+          },
+          body: JSON.stringify({ textQuery: destination }),
+        });
+        if (gRes.ok) {
+          const gData = (await gRes.json()) as { places?: Array<{ location?: { latitude: number; longitude: number } }> };
+          const loc = gData.places?.[0]?.location;
+          if (loc && typeof loc.latitude === "number" && typeof loc.longitude === "number") {
+            return { lat: loc.latitude, lng: loc.longitude };
+          }
+        }
+      } catch {
+        // Fall back gracefully
+      }
+    }
+
+    // Default to Tokyo if entirely unresolved
     return { lat: 35.6762, lng: 139.6503 };
   }
 
@@ -78,7 +121,7 @@ export class LiteApiLiveAdapter implements IHotelsProvider {
     const msPerDay = 1000 * 60 * 60 * 24;
     const nights = Math.max(1, Math.round((checkOut.getTime() - checkIn.getTime()) / msPerDay));
 
-    const coords = this.resolveCoordinates(query.destination, query.coordinates);
+    const coords = await this.resolveCoordinates(query.destination, query.coordinates);
     const url = `${this.baseUrl}/data/hotels?latitude=${coords.lat}&longitude=${coords.lng}&limit=10`;
 
     const res = await fetch(url, {
@@ -120,7 +163,8 @@ export class LiteApiLiveAdapter implements IHotelsProvider {
         nightRateCents = Math.round(defaultNightUsd * baseMultiplier * 100);
       }
 
-      const totalRateCents = nightRateCents * nights * Math.max(1, query.rooms);
+      const rooms = query.rooms ? Math.max(1, query.rooms) : 1;
+      const totalRateCents = nightRateCents * nights * rooms;
 
       return {
         id: h.id || `htl_lite_${index}`,

@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import type { CreateTripRequest, TravelStyle, TransportPreference } from "@travora/contracts";
 import { getPreferences } from "../api/client";
-import { SparklesIcon, CalendarIcon, MapPinIcon, CurrencyIcon } from "./Icons";
+import { SparklesIcon, CalendarIcon, MapPinIcon, CurrencyIcon, ArrowRightIcon } from "./Icons";
+import { HeroBanner } from "./HeroBanner";
 
 interface TripBuilderProps {
   onSubmit: (trip: CreateTripRequest) => void;
@@ -91,6 +92,15 @@ export function TripBuilder({ onSubmit, isLoading }: TripBuilderProps) {
   ]);
   const [pace, setPace] = useState<"relaxed" | "moderate" | "fast">("moderate");
   const [dietary, setDietary] = useState("");
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const formRef = useRef<HTMLDivElement>(null);
+
+  const handleOpenForm = () => {
+    setIsFormOpen(true);
+    setTimeout(() => {
+      formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 60);
+  };
 
   useEffect(() => {
     getPreferences()
@@ -122,6 +132,10 @@ export function TripBuilder({ onSubmit, isLoading }: TripBuilderProps) {
     setSelectedInterests(d.interests);
     setPace(d.constraints.pace || "moderate");
     setDietary(d.constraints.dietary.join(", ") || "");
+    setIsFormOpen(true);
+    setTimeout(() => {
+      formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 60);
   };
 
   const toggleInterest = (interest: string) => {
@@ -170,210 +184,246 @@ export function TripBuilder({ onSubmit, isLoading }: TripBuilderProps) {
 
   return (
     <div className="trip-builder">
-      <div className="builder-header">
-        <div className="hero-tag">
-          <SparklesIcon className="w-4 h-4" /> Next-Gen Multi-Agent Travel Engine
-        </div>
-        <h2>Where do you want to travel?</h2>
-        <p className="hero-subtitle">
-          Supervised multi-agent architecture coordinates specialist research, pure-function
-          arithmetic engines, route TSP heuristics, and critic replanning.
-        </p>
-      </div>
+      {/* Vibrant Hero Section inspired by user's travel vibe banner */}
+      <HeroBanner onCraftTrip={handleOpenForm} isFormOpen={isFormOpen} />
 
-      <div className="presets-container">
-        <span className="presets-label">⚡ Quick Presets:</span>
-        <div className="preset-chips">
-          {PRESETS.map((preset, idx) => (
-            <button
-              key={idx}
-              type="button"
-              className="preset-chip"
-              onClick={() => applyPreset(preset)}
-              title={preset.description}
-            >
-              <strong>{preset.label.split(" ")[0]}</strong> {preset.label.slice(preset.label.indexOf(" "))}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <form className="builder-form" onSubmit={handleSubmit}>
-        <div className="form-grid">
-          {/* Origin & Destination */}
-          <div className="form-group">
-            <label>
-              <MapPinIcon className="w-4 h-4 text-muted" /> Origin City
-            </label>
-            <input
-              type="text"
-              required
-              value={origin}
-              onChange={(e) => setOrigin(e.target.value)}
-              placeholder="e.g. London, UK"
-            />
-          </div>
-
-          <div className="form-group">
-            <label>
-              <MapPinIcon className="w-4 h-4 text-emerald" /> Destination
-            </label>
-            <input
-              type="text"
-              required
-              value={destination}
-              onChange={(e) => setDestination(e.target.value)}
-              placeholder="e.g. Lisbon, Portugal"
-            />
-          </div>
-
-          {/* Dates */}
-          <div className="form-group">
-            <label>
-              <CalendarIcon className="w-4 h-4 text-muted" /> Start Date
-            </label>
-            <input
-              type="date"
-              required
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-            />
-          </div>
-
-          <div className="form-group">
-            <label>
-              <CalendarIcon className="w-4 h-4 text-muted" /> End Date
-            </label>
-            <input
-              type="date"
-              required
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-            />
-          </div>
-
-          {/* Travellers */}
-          <div className="form-group">
-            <label>Adults (18+)</label>
-            <input
-              type="number"
-              min="1"
-              max="10"
-              required
-              value={adults}
-              onChange={(e) => setAdults(parseInt(e.target.value) || 1)}
-            />
-          </div>
-
-          <div className="form-group">
-            <label>Children</label>
-            <input
-              type="number"
-              min="0"
-              max="10"
-              value={children}
-              onChange={(e) => setChildren(parseInt(e.target.value) || 0)}
-            />
-          </div>
-
-          {/* Budget */}
-          <div className="form-group">
-            <label>
-              <CurrencyIcon className="w-4 h-4 text-muted" /> Currency
-            </label>
-            <select value={currency} onChange={(e) => setCurrency(e.target.value)}>
-              <option value="EUR">EUR (€)</option>
-              <option value="USD">USD ($)</option>
-              <option value="INR">INR (₹)</option>
-              <option value="GBP">GBP (£)</option>
-            </select>
-          </div>
-
-          <div className="form-group">
-            <label>Target Budget</label>
-            <input
-              type="number"
-              step="any"
-              min="50"
-              required
-              value={budgetDisplay}
-              onChange={(e) => setBudgetDisplay(e.target.value)}
-              placeholder="e.g. 1500"
-            />
-          </div>
-
-          {/* Travel Style */}
-          <div className="form-group">
-            <label>Travel Style</label>
-            <select
-              value={travelStyle}
-              onChange={(e) => setTravelStyle(e.target.value as TravelStyle)}
-            >
-              <option value="balanced">Balanced (Well-rounded)</option>
-              <option value="relaxed">Relaxed (Spacious schedule)</option>
-              <option value="budget">Budget (Cost-conscious)</option>
-              <option value="luxury">Luxury (Premium)</option>
-              <option value="fast-paced">Fast-Paced (Active)</option>
-            </select>
-          </div>
-
-          {/* Daily Pace */}
-          <div className="form-group">
-            <label>Daily Pace</label>
-            <select value={pace} onChange={(e) => setPace(e.target.value as any)}>
-              <option value="relaxed">Relaxed (~2 places / day)</option>
-              <option value="moderate">Moderate (~3-4 places / day)</option>
-              <option value="fast">Fast (~5+ places / day)</option>
-            </select>
-          </div>
-        </div>
-
-        {/* Interests */}
-        <div className="interests-section">
-          <label className="section-label">Travel Interests & Passions</label>
-          <div className="tag-cloud">
-            {INTEREST_OPTIONS.map((interest) => {
-              const active = selectedInterests.includes(interest);
-              return (
+      {!isFormOpen ? (
+        <div className="hero-presets-strip">
+          <div className="presets-container">
+            <span className="presets-label">⚡ Or Choose a Quick Destination Preset:</span>
+            <div className="preset-chips">
+              {PRESETS.map((preset, idx) => (
                 <button
+                  key={idx}
                   type="button"
-                  key={interest}
-                  className={`tag-pill ${active ? "active" : ""}`}
-                  onClick={() => toggleInterest(interest)}
+                  className="preset-chip"
+                  onClick={() => applyPreset(preset)}
+                  title={preset.description}
                 >
-                  {active ? "✓ " : "+ "}
-                  {interest.charAt(0).toUpperCase() + interest.slice(1)}
+                  <strong>{preset.label.split(" ")[0]}</strong> {preset.label.slice(preset.label.indexOf(" "))}
                 </button>
-              );
-            })}
+              ))}
+            </div>
           </div>
         </div>
+      ) : (
+        <div ref={formRef} className="builder-form-wrapper fade-in-up">
+          <div className="builder-header">
+            <div className="builder-header-top">
+              <div className="hero-tag">
+                <SparklesIcon className="w-4 h-4" /> Customized Multi-Agent Itinerary Builder
+              </div>
+              <button
+                type="button"
+                className="btn-collapse-toggle"
+                onClick={() => setIsFormOpen(false)}
+                title="Collapse form"
+              >
+                ▲ Close Form
+              </button>
+            </div>
+            <h2>Where do you want to travel?</h2>
+            <p className="hero-subtitle">
+              Configure your trip details. Our Level 3 Multi-Agent architecture coordinates destination
+              research, flights, hotels, live weather, pure arithmetic budgets, and route TSP heuristics.
+            </p>
+          </div>
 
-        {/* Dietary Constraints */}
-        <div className="constraints-section">
-          <label className="section-label">Dietary or Accessibility Needs (Optional)</label>
-          <input
-            type="text"
-            value={dietary}
-            onChange={(e) => setDietary(e.target.value)}
-            placeholder="e.g. vegetarian, gluten-free, wheelchair accessible"
-          />
-        </div>
+          <div className="presets-container">
+            <span className="presets-label">⚡ Quick Presets:</span>
+            <div className="preset-chips">
+              {PRESETS.map((preset, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  className="preset-chip"
+                  onClick={() => applyPreset(preset)}
+                  title={preset.description}
+                >
+                  <strong>{preset.label.split(" ")[0]}</strong> {preset.label.slice(preset.label.indexOf(" "))}
+                </button>
+              ))}
+            </div>
+          </div>
 
-        <div className="form-actions">
-          <button type="submit" className="btn btn-primary btn-lg" disabled={isLoading}>
-            {isLoading ? (
-              <>
-                <span className="spinner"></span> Dispatching Multi-Agent Graph...
-              </>
-            ) : (
-              <>
-                <SparklesIcon className="w-5 h-5" /> Generate AI Multi-Agent Itinerary
-              </>
-            )}
-          </button>
+          <form className="builder-form" onSubmit={handleSubmit}>
+            <div className="form-grid">
+              {/* Origin & Destination */}
+              <div className="form-group">
+                <label>
+                  <MapPinIcon className="w-4 h-4 text-muted" /> Origin City
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={origin}
+                  onChange={(e) => setOrigin(e.target.value)}
+                  placeholder="e.g. London, UK"
+                />
+              </div>
+
+              <div className="form-group">
+                <label>
+                  <MapPinIcon className="w-4 h-4 text-emerald" /> Destination
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={destination}
+                  onChange={(e) => setDestination(e.target.value)}
+                  placeholder="e.g. Lisbon, Portugal"
+                />
+              </div>
+
+              {/* Dates */}
+              <div className="form-group">
+                <label>
+                  <CalendarIcon className="w-4 h-4 text-muted" /> Start Date
+                </label>
+                <input
+                  type="date"
+                  required
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                />
+              </div>
+
+              <div className="form-group">
+                <label>
+                  <CalendarIcon className="w-4 h-4 text-muted" /> End Date
+                </label>
+                <input
+                  type="date"
+                  required
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                />
+              </div>
+
+              {/* Travellers */}
+              <div className="form-group">
+                <label>Adults (18+)</label>
+                <input
+                  type="number"
+                  min="1"
+                  max="10"
+                  required
+                  value={adults}
+                  onChange={(e) => setAdults(parseInt(e.target.value) || 1)}
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Children</label>
+                <input
+                  type="number"
+                  min="0"
+                  max="10"
+                  value={children}
+                  onChange={(e) => setChildren(parseInt(e.target.value) || 0)}
+                />
+              </div>
+
+              {/* Budget */}
+              <div className="form-group">
+                <label>
+                  <CurrencyIcon className="w-4 h-4 text-muted" /> Currency
+                </label>
+                <select value={currency} onChange={(e) => setCurrency(e.target.value)}>
+                  <option value="EUR">EUR (€)</option>
+                  <option value="USD">USD ($)</option>
+                  <option value="INR">INR (₹)</option>
+                  <option value="GBP">GBP (£)</option>
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label>Target Budget</label>
+                <input
+                  type="number"
+                  step="any"
+                  min="50"
+                  required
+                  value={budgetDisplay}
+                  onChange={(e) => setBudgetDisplay(e.target.value)}
+                  placeholder="e.g. 1500"
+                />
+              </div>
+
+              {/* Travel Style */}
+              <div className="form-group">
+                <label>Travel Style</label>
+                <select
+                  value={travelStyle}
+                  onChange={(e) => setTravelStyle(e.target.value as TravelStyle)}
+                >
+                  <option value="balanced">Balanced (Well-rounded)</option>
+                  <option value="relaxed">Relaxed (Spacious schedule)</option>
+                  <option value="budget">Budget (Cost-conscious)</option>
+                  <option value="luxury">Luxury (Premium)</option>
+                  <option value="fast-paced">Fast-Paced (Active)</option>
+                </select>
+              </div>
+
+              {/* Daily Pace */}
+              <div className="form-group">
+                <label>Daily Pace</label>
+                <select value={pace} onChange={(e) => setPace(e.target.value as any)}>
+                  <option value="relaxed">Relaxed (~2 places / day)</option>
+                  <option value="moderate">Moderate (~3-4 places / day)</option>
+                  <option value="fast">Fast (~5+ places / day)</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Interests */}
+            <div className="interests-section">
+              <label className="section-label">Travel Interests & Passions</label>
+              <div className="tag-cloud">
+                {INTEREST_OPTIONS.map((interest) => {
+                  const active = selectedInterests.includes(interest);
+                  return (
+                    <button
+                      type="button"
+                      key={interest}
+                      className={`tag-pill ${active ? "active" : ""}`}
+                      onClick={() => toggleInterest(interest)}
+                    >
+                      {active ? "✓ " : "+ "}
+                      {interest.charAt(0).toUpperCase() + interest.slice(1)}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Dietary Constraints */}
+            <div className="constraints-section">
+              <label className="section-label">Dietary or Accessibility Needs (Optional)</label>
+              <input
+                type="text"
+                value={dietary}
+                onChange={(e) => setDietary(e.target.value)}
+                placeholder="e.g. vegetarian, gluten-free, wheelchair accessible"
+              />
+            </div>
+
+            <div className="form-actions">
+              <button type="submit" className="btn btn-primary btn-lg" disabled={isLoading}>
+                {isLoading ? (
+                  <>
+                    <span className="spinner"></span> Dispatching Multi-Agent Graph...
+                  </>
+                ) : (
+                  <>
+                    <SparklesIcon className="w-5 h-5" /> Generate AI Multi-Agent Itinerary
+                  </>
+                )}
+              </button>
+            </div>
+          </form>
         </div>
-      </form>
+      )}
     </div>
   );
 }

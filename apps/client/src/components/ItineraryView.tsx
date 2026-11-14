@@ -191,7 +191,7 @@ export function ItineraryView({ plan, onOpenReplanModal }: ItineraryViewProps) {
                   </div>
                   <h4 className="hotel-banner-title">{dayAccom.name}</h4>
                   <p className="hotel-banner-address">
-                    <MapPinIcon className="w-3.5 h-3.5" /> {dayAccom.address}
+                    <MapPinIcon className="w-3.5 h-3.5 hotel-pin-icon" /> {dayAccom.address}
                   </p>
                   {dayAccom.notes && (
                     <p className="hotel-banner-notes">{dayAccom.notes}</p>

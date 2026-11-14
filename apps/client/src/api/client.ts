@@ -115,23 +115,28 @@ export async function ensureAuth(): Promise<string> {
   }
 
   // Register demo user
-  const regRes = await fetch("/api/v1/auth/register", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      email: demoEmail,
-      password: demoPassword,
-      name: "Demo Explorer",
-    }),
-  });
+  try {
+    const regRes = await fetch("/api/v1/auth/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: demoEmail,
+        password: demoPassword,
+        name: "Demo Explorer",
+      }),
+    });
 
-  if (!regRes.ok) {
-    throw new Error("Failed to authenticate demo user session");
+    if (regRes.ok) {
+      const regData = await regRes.json();
+      setStoredToken(regData.token);
+      return regData.token;
+    }
+
+    const errText = await regRes.text().catch(() => "");
+    throw new Error(errText || `Server returned ${regRes.status}`);
+  } catch (err) {
+    throw new Error(`Failed to authenticate demo user session: Backend server may be offline or unreachable (${(err as Error).message})`);
   }
-
-  const regData = await regRes.json();
-  setStoredToken(regData.token);
-  return regData.token;
 }
 
 async function authFetch(url: string, options: RequestInit = {}): Promise<Response> {

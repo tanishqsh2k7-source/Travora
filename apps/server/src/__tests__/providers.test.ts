@@ -43,6 +43,24 @@ describe("Phase 2: Provider Layer", () => {
       expect(place?.openingHours?.weekdayText.length).toBeGreaterThan(0);
     });
 
+    it("searches places matching China destination and returns authentic Chinese sights", async () => {
+      const places = await provider.searchPlaces({
+        query: "history culture in China",
+        destination: "China",
+        limit: 5,
+        types: ["historical", "museum"],
+        radiusMeters: 15000,
+      });
+
+      expect(places.length).toBeGreaterThan(0);
+      for (const p of places) {
+        expect(p.address.toLowerCase()).toContain("china");
+        expect(p.address.toLowerCase()).not.toContain("tokyo");
+      }
+      const names = places.map((p) => p.name);
+      expect(names.some((n) => n.includes("Forbidden City") || n.includes("Great Wall") || n.includes("Temple of Heaven"))).toBe(true);
+    });
+
     it("returns null for a non-existent place ID", async () => {
       const place = await provider.getPlaceDetails("unknown_place_123");
       expect(place).toBeNull();
@@ -170,6 +188,27 @@ describe("Phase 2: Provider Layer", () => {
       expect(luxuryHotels.length).toBe(1);
       expect(luxuryHotels[0].name).toBe("HOSHINOYA Tokyo");
       expect(luxuryHotels[0].hotelStyle).toBe("luxury");
+    });
+
+    it("returns China hotels when destination is China and never returns Tokyo", async () => {
+      const hotels = await provider.searchHotels({
+        destination: "China",
+        checkInDate: "2027-05-10",
+        checkOutDate: "2027-05-14",
+        adults: 2,
+        rooms: 1,
+        currency: "USD",
+      });
+
+      expect(hotels.length).toBe(3);
+      for (const h of hotels) {
+        expect(h.address.toLowerCase()).toContain("china");
+        expect(h.address.toLowerCase()).not.toContain("tokyo");
+      }
+      const luxury = hotels.find((h) => h.hotelStyle === "luxury");
+      expect(luxury?.name).toBe("The Peninsula Beijing");
+      const balanced = hotels.find((h) => h.hotelStyle === "balanced");
+      expect(balanced?.name).toBe("The Great Wall Hotel Beijing");
     });
   });
 

@@ -99,7 +99,7 @@ export function MapStopList({ days }: MapStopListProps) {
                 {/* Visual grid */}
                 <defs>
                   <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
-                    <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="1" />
+                    <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(180,130,80,0.12)" strokeWidth="1" />
                   </pattern>
                 </defs>
                 <rect width="100%" height="100%" fill="url(#grid)" />
@@ -108,7 +108,7 @@ export function MapStopList({ days }: MapStopListProps) {
                 {currentDay.stops.length > 1 && (
                   <polyline
                     fill="none"
-                    stroke="#6366f1"
+                    stroke="#B45309"
                     strokeWidth="3"
                     strokeDasharray="6,4"
                     points={currentDay.stops
@@ -128,11 +128,11 @@ export function MapStopList({ days }: MapStopListProps) {
 
                   return (
                     <g key={i} className="map-node">
-                      <circle cx={x} cy={y} r="14" fill="#4f46e5" stroke="#ffffff" strokeWidth="2" />
+                      <circle cx={x} cy={y} r="14" fill="#B45309" stroke="#FAF7EE" strokeWidth="2" />
                       <text x={x} y={y + 4} textAnchor="middle" fill="#ffffff" fontSize="11" fontWeight="bold">
                         {i + 1}
                       </text>
-                      <text x={x} y={y + 24} textAnchor="middle" fill="#94a3b8" fontSize="10">
+                      <text x={x} y={y + 24} textAnchor="middle" fill="#78716C" fontSize="10">
                         {stop.name.split(" ")[0]}
                       </text>
                     </g>
