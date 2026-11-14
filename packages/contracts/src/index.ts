@@ -42,3 +42,6 @@ export * from "./replanning.js";
 
 // Events & SSE Schemas (Phase 7)
 export * from "./events.js";
+
+// Rich Itinerary Contracts (Journey, Stays, Transitions, Day Plans)
+export * from "./itinerary.js";

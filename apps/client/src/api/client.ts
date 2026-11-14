@@ -163,6 +163,23 @@ export async function createTrip(payload: CreateTripRequest): Promise<TripRespon
   return res.json();
 }
 
+export async function parsePromptToTrip(prompt: string): Promise<{
+  tripRequest: CreateTripRequest;
+  summary?: string;
+}> {
+  const res = await authFetch("/api/v1/trips/parse-prompt", {
+    method: "POST",
+    body: JSON.stringify({ prompt }),
+  });
+
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.error || "Failed to parse trip prompt");
+  }
+
+  return res.json();
+}
+
 export async function listTrips(): Promise<TripResponse[]> {
   const res = await authFetch("/api/v1/trips");
   if (!res.ok) throw new Error("Failed to list trips");

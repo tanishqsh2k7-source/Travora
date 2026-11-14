@@ -415,7 +415,7 @@ export class PlacesFixtureAdapter implements IPlacesProvider {
         const relevant = destMatches.filter((p) => {
           const matchName = p.name.toLowerCase().includes(qLower);
           const matchDesc = (p.description ?? "").toLowerCase().includes(qLower);
-          const matchTypes = p.types.some((t) => qLower.includes(t) || query.types.includes(t));
+          const matchTypes = p.types.some((t) => qLower.includes(t) || (query.types && query.types.includes(t)));
           return matchName || matchDesc || matchTypes;
         });
 

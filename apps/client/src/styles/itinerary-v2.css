@@ -1,0 +1,1456 @@
+/* ==========================================================================
+   TRAVORA ITINERARY V2 — EDITORIAL TRAVEL MAGAZINE STYLES
+   ========================================================================== */
+
+/* Container */
+.itinerary-v2-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding-bottom: 4rem;
+}
+
+/* ── 1. HEADER BAND ──────────────────────────────────────────────────────── */
+.itinerary-header-band {
+  background: var(--color-surface, #ffffff);
+  border: 1px solid var(--color-border, #E5E0D8);
+  border-radius: 16px;
+  padding: 1.75rem 2rem;
+  box-shadow: 0 4px 20px -2px rgba(26, 26, 26, 0.05);
+}
+
+.header-top-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 2rem;
+  margin-bottom: 1.5rem;
+}
+
+.header-badge-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.curated-journey-tag {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-terracotta, #C85A32);
+  background: rgba(200, 90, 50, 0.08);
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(200, 90, 50, 0.2);
+}
+
+.demo-badge-container {
+  position: relative;
+}
+
+.data-mode-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.data-mode-badge.mode-demo {
+  background: #FEF3C7;
+  color: #92400E;
+  border-color: #FCD34D;
+}
+
+.data-mode-badge.mode-live {
+  background: #D1FAE5;
+  color: #065F46;
+  border-color: #6EE7B7;
+}
+
+.demo-popover {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  width: 280px;
+  background: #ffffff;
+  border: 1px solid var(--color-border, #E5E0D8);
+  border-radius: 12px;
+  padding: 1rem;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15);
+  z-index: 50;
+  animation: fadeIn 0.15s ease-out;
+}
+
+.popover-title {
+  display: block;
+  font-size: 0.875rem;
+  color: #1a1a1a;
+  margin-bottom: 0.35rem;
+}
+
+.popover-text {
+  font-size: 0.8125rem;
+  color: #6B7280;
+  line-height: 1.4;
+  margin-bottom: 0.75rem;
+}
+
+.popover-close-btn {
+  display: block;
+  width: 100%;
+  padding: 0.35rem 0.5rem;
+  background: #F4EFE6;
+  border: 1px solid #E5E0D8;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #1a1a1a;
+  cursor: pointer;
+}
+
+.header-main-title {
+  font-family: var(--font-serif, "Playfair Display", Georgia, serif);
+  font-size: 2rem;
+  font-weight: 600;
+  color: var(--color-ink, #1A1A1A);
+  line-height: 1.2;
+  margin-bottom: 0.75rem;
+}
+
+.header-meta-chips {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.meta-chip {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.875rem;
+  color: #4B5563;
+}
+
+.nights-sub {
+  color: #9CA3AF;
+  margin-left: 0.35rem;
+}
+
+.header-pricing-block {
+  text-align: right;
+  min-width: 220px;
+  background: #FAF8F5;
+  border: 1px solid var(--color-border, #E5E0D8);
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+}
+
+.price-tag-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+  color: #9CA3AF;
+  margin-bottom: 0.25rem;
+}
+
+.price-headline {
+  font-family: var(--font-serif, "Playfair Display", Georgia, serif);
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--color-ink, #1A1A1A);
+  line-height: 1;
+  margin-bottom: 0.35rem;
+}
+
+.budget-comparison {
+  font-size: 0.8125rem;
+  line-height: 1.3;
+}
+
+.budget-status.within {
+  color: #059669;
+  font-weight: 500;
+}
+
+.budget-status.over {
+  color: #DC2626;
+  font-weight: 500;
+}
+
+.header-actions-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid var(--color-border, #E5E0D8);
+  padding-top: 1.25rem;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.header-actions-group {
+  display: flex;
+  gap: 0.75rem;
+}
+
+/* ── 2. SYNCHRONIZED TABS BAR ────────────────────────────────────────────── */
+.itinerary-nav-tabs-bar {
+  display: flex;
+  gap: 0.5rem;
+  border-bottom: 2px solid var(--color-border, #E5E0D8);
+  padding-bottom: 0;
+  overflow-x: auto;
+}
+
+.nav-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.75rem 1.25rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #6B7280;
+  background: transparent;
+  border: none;
+  border-bottom: 3px solid transparent;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+  margin-bottom: -2px;
+}
+
+.nav-tab-btn:hover {
+  color: var(--color-ink, #1A1A1A);
+}
+
+.nav-tab-btn.active {
+  color: var(--color-terracotta, #C85A32);
+  border-bottom-color: var(--color-terracotta, #C85A32);
+}
+
+/* ── 3. JOURNEY STRIP ────────────────────────────────────────────────────── */
+.journey-strip-wrapper {
+  background: var(--color-surface, #ffffff);
+  border: 1px solid var(--color-border, #E5E0D8);
+  border-radius: 16px;
+  padding: 1.75rem 2rem;
+  box-shadow: 0 4px 20px -2px rgba(26, 26, 26, 0.05);
+}
+
+.journey-strip-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.journey-strip-title {
+  font-family: var(--font-serif, "Playfair Display", Georgia, serif);
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--color-ink, #1A1A1A);
+  margin: 0;
+}
+
+.journey-strip-meta {
+  font-size: 0.875rem;
+  color: #6B7280;
+}
+
+.journey-timeline-flow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  overflow-x: auto;
+  padding-bottom: 1.5rem;
+}
+
+.journey-node {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  min-width: 130px;
+}
+
+.node-marker {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.node-marker.origin-marker {
+  background: #0284c7;
+}
+
+.node-marker.destination-marker {
+  background: #0d9488;
+}
+
+.node-dot {
+  width: 10px;
+  height: 10px;
+  background: #ffffff;
+  border-radius: 50%;
+}
+
+.node-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.node-type {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #9CA3AF;
+  letter-spacing: 0.04em;
+}
+
+.node-city {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1A1A1A;
+}
+
+.node-code {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #6B7280;
+  background: #F3F4F6;
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
+  margin-top: 0.2rem;
+}
+
+.node-hotel-preview {
+  font-size: 0.75rem;
+  color: #4B5563;
+  margin-top: 0.35rem;
+  max-width: 120px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.journey-leg-connector {
+  flex: 1;
+  min-width: 140px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.connector-line {
+  position: absolute;
+  top: 16px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: #E5E0D8;
+  z-index: 1;
+}
+
+.journey-leg-connector.mode-flight .connector-line {
+  border-top: 2px dashed #38BDF8;
+  background: transparent;
+}
+
+.journey-leg-connector.mode-train .connector-line {
+  background: #10B981;
+}
+
+.connector-pill {
+  position: relative;
+  z-index: 2;
+  background: #ffffff;
+  border: 1px solid var(--color-border, #E5E0D8);
+  border-radius: 20px;
+  padding: 0.4rem 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+}
+
+.leg-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.leg-route-title {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #1A1A1A;
+}
+
+.leg-duration {
+  color: #6B7280;
+  font-weight: 400;
+}
+
+.leg-times {
+  font-size: 0.6875rem;
+  color: #9CA3AF;
+}
+
+/* 3 Highlights Grid */
+.journey-highlights-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.25rem;
+  margin-top: 1.75rem;
+  border-top: 1px solid var(--color-border, #E5E0D8);
+  padding-top: 1.5rem;
+}
+
+.highlight-card {
+  display: flex;
+  gap: 1rem;
+  background: #FAF8F5;
+  border: 1px solid var(--color-border, #E5E0D8);
+  border-radius: 12px;
+  padding: 1.25rem;
+}
+
+.highlight-icon-box {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.highlight-content {
+  flex: 1;
+}
+
+.highlight-label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #6B7280;
+  margin-bottom: 0.35rem;
+}
+
+.highlight-label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.35rem;
+}
+
+.badge-mode {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  padding: 0.15rem 0.5rem;
+  border-radius: 9999px;
+  background: #E0F2FE;
+  color: #0369A1;
+}
+
+.stay-mini-row {
+  font-size: 0.8125rem;
+  color: #374151;
+  margin-bottom: 0.35rem;
+}
+
+.stay-counter {
+  font-weight: 600;
+  color: #9CA3AF;
+  margin-right: 0.35rem;
+}
+
+.stay-reason-pill {
+  display: block;
+  font-size: 0.6875rem;
+  color: #059669;
+  background: #ECFDF5;
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
+  margin-top: 0.15rem;
+}
+
+.cost-title {
+  display: block;
+  font-size: 0.9375rem;
+  color: #1A1A1A;
+  margin-bottom: 0.25rem;
+}
+
+.cost-value-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.cost-amount {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1A1A1A;
+}
+
+.cost-pct {
+  font-size: 0.75rem;
+  color: #6B7280;
+}
+
+.notes-list {
+  font-size: 0.8125rem;
+  color: #4B5563;
+  padding-left: 1rem;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.clean-schedule-note {
+  font-size: 0.8125rem;
+  color: #4B5563;
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* ── 4. STAYS TIMELINE ───────────────────────────────────────────────────── */
+.stays-timeline-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.stays-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.stays-title {
+  font-family: var(--font-serif, "Playfair Display", Georgia, serif);
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1A1A1A;
+  margin: 0 0 0.25rem 0;
+}
+
+.stays-subtitle {
+  font-size: 0.875rem;
+  color: #6B7280;
+  margin: 0;
+}
+
+.stays-counter-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #065F46;
+  background: #D1FAE5;
+  padding: 0.4rem 0.85rem;
+  border-radius: 9999px;
+}
+
+.stays-sequence {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.stay-card {
+  display: flex;
+  background: #ffffff;
+  border: 1px solid var(--color-border, #E5E0D8);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 15px -2px rgba(26, 26, 26, 0.04);
+}
+
+.stay-card-side {
+  width: 90px;
+  background: #FAF8F5;
+  border-right: 1px solid var(--color-border, #E5E0D8);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem 0.5rem;
+  text-align: center;
+}
+
+.stay-index-bubble {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #1A1A1A;
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 0.8125rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.75rem;
+}
+
+.stay-nights-badge strong {
+  display: block;
+  font-size: 1.5rem;
+  font-family: var(--font-serif, "Playfair Display", Georgia, serif);
+  color: var(--color-terracotta, #C85A32);
+  line-height: 1;
+}
+
+.stay-nights-badge span {
+  font-size: 0.75rem;
+  color: #6B7280;
+  text-transform: uppercase;
+}
+
+.stay-card-main {
+  flex: 1;
+  padding: 1.5rem 1.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.stay-reason-banner {
+  background: rgba(200, 90, 50, 0.08);
+  border: 1px solid rgba(200, 90, 50, 0.2);
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.reason-code-badge {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  background: #C85A32;
+  color: #ffffff;
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+}
+
+.reason-text {
+  font-size: 0.8125rem;
+  color: #1A1A1A;
+  font-weight: 500;
+}
+
+.stay-info-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1.5rem;
+}
+
+.stay-city-area {
+  font-size: 0.8125rem;
+  color: #6B7280;
+  margin-bottom: 0.25rem;
+}
+
+.stay-hotel-name {
+  font-family: var(--font-serif, "Playfair Display", Georgia, serif);
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1A1A1A;
+  margin: 0 0 0.25rem 0;
+}
+
+.stay-address {
+  font-size: 0.8125rem;
+  color: #6B7280;
+  margin: 0;
+}
+
+.stay-pricing {
+  text-align: right;
+  min-width: 160px;
+}
+
+.nightly-rate strong {
+  font-size: 1.25rem;
+  font-family: var(--font-serif, "Playfair Display", Georgia, serif);
+  color: #1A1A1A;
+}
+
+.nightly-rate span {
+  font-size: 0.8125rem;
+  color: #6B7280;
+  margin-left: 0.2rem;
+}
+
+.total-rate {
+  font-size: 0.8125rem;
+  color: #4B5563;
+  margin-top: 0.15rem;
+}
+
+.offer-kind-tag {
+  display: inline-block;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  margin-top: 0.4rem;
+}
+
+.offer-kind-tag.demo_offer {
+  background: #FEF3C7;
+  color: #92400E;
+}
+
+.offer-kind-tag.live_offer {
+  background: #D1FAE5;
+  color: #065F46;
+}
+
+.offer-kind-tag.estimate {
+  background: #F3F4F6;
+  color: #4B5563;
+}
+
+.stay-meta-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  background: #FAF8F5;
+  border-radius: 10px;
+  padding: 0.85rem 1rem;
+}
+
+.meta-box {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.meta-label {
+  display: block;
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  color: #9CA3AF;
+  letter-spacing: 0.04em;
+}
+
+.meta-value {
+  font-size: 0.8125rem;
+  color: #1A1A1A;
+}
+
+.stay-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid var(--color-border, #E5E0D8);
+  padding-top: 0.75rem;
+  font-size: 0.75rem;
+  color: #9CA3AF;
+}
+
+.stay-source code {
+  color: #6B7280;
+  background: #F3F4F6;
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
+}
+
+.guarantee-pill {
+  color: #059669;
+  font-weight: 500;
+}
+
+/* Moving Day Transition Connector */
+.transition-connector-block {
+  display: flex;
+  gap: 1.25rem;
+  background: #FFFBEB;
+  border: 1px dashed #F59E0B;
+  border-radius: 14px;
+  padding: 1.25rem 1.5rem;
+}
+
+.transition-icon-node {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #FEF3C7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.transition-body {
+  flex: 1;
+}
+
+.transition-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.moving-badge {
+  font-weight: 700;
+  font-size: 0.9375rem;
+  color: #B45309;
+}
+
+.transition-hours {
+  font-size: 0.8125rem;
+  color: #92400E;
+}
+
+.transition-legs-row {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.transition-leg-badge {
+  background: #ffffff;
+  border: 1px solid #FCD34D;
+  border-radius: 6px;
+  padding: 0.35rem 0.65rem;
+  font-size: 0.8125rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.leg-mode-tag {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  background: #F59E0B;
+  color: #ffffff;
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+}
+
+.transition-tips {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.8125rem;
+  color: #78350F;
+}
+
+/* ── 5. DAY BY DAY TIMELINE ──────────────────────────────────────────────── */
+.day-timeline-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.day-timeline-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.timeline-title {
+  font-family: var(--font-serif, "Playfair Display", Georgia, serif);
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1A1A1A;
+  margin: 0 0 0.25rem 0;
+}
+
+.timeline-subtitle {
+  font-size: 0.875rem;
+  color: #6B7280;
+  margin: 0;
+}
+
+.accordion-toggle-btns {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btn-text-action {
+  background: none;
+  border: none;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-terracotta, #C85A32);
+  cursor: pointer;
+  padding: 0;
+}
+
+.btn-text-action:hover {
+  text-decoration: underline;
+}
+
+.dot-divider {
+  color: #D1D5DB;
+}
+
+.days-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.day-accordion-card {
+  background: #ffffff;
+  border: 1px solid var(--color-border, #E5E0D8);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 15px -2px rgba(26, 26, 26, 0.04);
+}
+
+.day-accordion-card.is-moving-day {
+  border-left: 4px solid #F59E0B;
+}
+
+.day-accordion-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.25rem 1.75rem;
+  background: #FAF8F5;
+  cursor: pointer;
+  user-select: none;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.day-pill-badge {
+  background: var(--color-ink, #1A1A1A);
+  color: #ffffff;
+  padding: 0.35rem 0.85rem;
+  border-radius: 20px;
+  font-weight: 700;
+  font-size: 0.875rem;
+}
+
+.day-heading-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.day-date-line {
+  font-size: 0.8125rem;
+  color: #6B7280;
+}
+
+.day-city-tag {
+  color: var(--color-terracotta, #C85A32);
+  font-weight: 600;
+  margin-left: 0.35rem;
+}
+
+.day-theme-title {
+  font-family: var(--font-serif, "Playfair Display", Georgia, serif);
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1A1A1A;
+  margin: 0.15rem 0 0 0;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.day-chips-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.chip-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.25rem 0.65rem;
+  border-radius: 20px;
+}
+
+.chip-moving {
+  background: #FEF3C7;
+  color: #92400E;
+  border: 1px solid #FCD34D;
+}
+
+.chip-weather {
+  background: #F3F4F6;
+  color: #374151;
+}
+
+.chip-stay {
+  background: #EEF2FF;
+  color: #4338CA;
+}
+
+.day-accordion-content {
+  padding: 1.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* Narrative Day Box (Magazine Style) */
+.narrative-day-box {
+  background: #FAF8F5;
+  border: 1px solid var(--color-border, #E5E0D8);
+  border-radius: 12px;
+  padding: 1.25rem 1.5rem;
+}
+
+.narrative-header {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--color-ink, #1A1A1A);
+  margin-bottom: 0.5rem;
+}
+
+.narrative-text {
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  color: #374151;
+  margin: 0 0 1rem 0;
+}
+
+.narrative-meta-row {
+  display: flex;
+  gap: 1.5rem;
+  border-top: 1px solid var(--color-border, #E5E0D8);
+  padding-top: 0.75rem;
+  font-size: 0.8125rem;
+  color: #4B5563;
+  flex-wrap: wrap;
+}
+
+/* Events Timeline */
+.events-timeline {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  padding-left: 0.5rem;
+}
+
+.event-timeline-item {
+  display: flex;
+  gap: 1.25rem;
+  position: relative;
+  padding-bottom: 1.25rem;
+}
+
+.event-time-column {
+  width: 90px;
+  display: flex;
+  flex-direction: column;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.event-start {
+  font-weight: 700;
+  font-size: 0.9375rem;
+  color: #1A1A1A;
+}
+
+.event-end {
+  font-size: 0.75rem;
+  color: #9CA3AF;
+}
+
+.event-marker-column {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+
+.event-icon-circle {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 2px solid var(--color-border, #E5E0D8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+  z-index: 2;
+}
+
+.event-connector-line {
+  position: absolute;
+  top: 30px;
+  bottom: 0;
+  width: 2px;
+  background: #E5E0D8;
+  z-index: 1;
+}
+
+.event-card-column {
+  flex: 1;
+}
+
+.event-card-box {
+  background: #ffffff;
+  border: 1px solid var(--color-border, #E5E0D8);
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+}
+
+.event-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.35rem;
+}
+
+.event-title-line {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.event-type-badge {
+  font-size: 0.625rem;
+  font-weight: 700;
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+}
+
+.event-type-badge.type-arrival {
+  background: #E0F2FE;
+  color: #0369A1;
+}
+
+.event-type-badge.type-departure {
+  background: #FFE4E6;
+  color: #BE123C;
+}
+
+.event-type-badge.type-activity {
+  background: #EDE9FE;
+  color: #6D28D9;
+}
+
+.event-type-badge.type-meal {
+  background: #FFEDD5;
+  color: #C2410C;
+}
+
+.event-type-badge.type-check_in {
+  background: #D1FAE5;
+  color: #065F46;
+}
+
+.event-type-badge.type-check_out {
+  background: #FEF3C7;
+  color: #92400E;
+}
+
+.event-type-badge.type-free_time {
+  background: #CCFBF1;
+  color: #0F766E;
+}
+
+.event-name {
+  font-size: 1rem;
+  color: #1A1A1A;
+}
+
+.event-cost-pill {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #059669;
+}
+
+.event-location-line {
+  font-size: 0.8125rem;
+  color: #4B5563;
+  margin-bottom: 0.35rem;
+}
+
+.event-notes-text {
+  font-size: 0.8125rem;
+  color: #6B7280;
+  line-height: 1.4;
+  margin: 0.25rem 0 0 0;
+}
+
+.event-transfer-notice {
+  margin-top: 0.75rem;
+  padding-top: 0.5rem;
+  border-top: 1px dashed var(--color-border, #E5E0D8);
+  font-size: 0.75rem;
+  color: #6B7280;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.transfer-mode-pill {
+  font-size: 0.625rem;
+  font-weight: 700;
+  background: #F3F4F6;
+  color: #4B5563;
+  padding: 0.1rem 0.35rem;
+  border-radius: 3px;
+}
+
+.day-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #FAF8F5;
+  border-top: 1px solid var(--color-border, #E5E0D8);
+  border-radius: 0 0 16px 16px;
+  padding: 0.85rem 1.5rem;
+  margin: 0 -1.75rem -1.75rem -1.75rem;
+}
+
+.footer-left {
+  font-size: 0.8125rem;
+  color: #6B7280;
+}
+
+.stat-separator {
+  margin: 0 0.35rem;
+  color: #D1D5DB;
+}
+
+.day-cost-label {
+  font-size: 0.8125rem;
+  color: #6B7280;
+  margin-right: 0.35rem;
+}
+
+.day-cost-val {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1A1A1A;
+}
+
+/* ── 6. ROUTE MAP ────────────────────────────────────────────────────────── */
+.route-map-wrapper {
+  background: #ffffff;
+  border: 1px solid var(--color-border, #E5E0D8);
+  border-radius: 16px;
+  padding: 1.75rem;
+  box-shadow: 0 4px 15px -2px rgba(26, 26, 26, 0.04);
+}
+
+.map-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.25rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.map-card-title {
+  font-family: var(--font-serif, "Playfair Display", Georgia, serif);
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1A1A1A;
+  margin: 0 0 0.25rem 0;
+}
+
+.map-card-subtitle {
+  font-size: 0.875rem;
+  color: #6B7280;
+  margin: 0;
+}
+
+.map-legend {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  font-size: 0.8125rem;
+  color: #4B5563;
+}
+
+.legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.legend-line {
+  width: 20px;
+  height: 3px;
+  border-radius: 2px;
+}
+
+.legend-line.line-flight {
+  border-top: 3px dashed #0284c7;
+}
+
+.legend-line.line-ground {
+  background: #059669;
+}
+
+.legend-dot.dot-stay {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #0d9488;
+}
+
+.accessible-route-summary {
+  margin-top: 1.5rem;
+  border-top: 1px solid var(--color-border, #E5E0D8);
+  padding-top: 1.25rem;
+}
+
+.accessible-title {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #1A1A1A;
+  margin-bottom: 0.75rem;
+}
+
+.accessible-steps-list {
+  padding-left: 1.25rem;
+  margin: 0;
+  font-size: 0.8125rem;
+  color: #4B5563;
+  line-height: 1.6;
+}
+
+.accessible-step-item {
+  margin-bottom: 0.35rem;
+}
+
+.step-meta {
+  color: #6B7280;
+  margin-left: 0.35rem;
+}
+
+/* ── 7. RESPONSIVE DESIGN (390px Mobile View) ────────────────────────────── */
+@media (max-width: 768px) {
+  .header-top-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1.25rem;
+  }
+
+  .header-pricing-block {
+    text-align: left;
+  }
+
+  .journey-timeline-flow {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .journey-leg-connector {
+    min-width: 100%;
+    margin: 0.5rem 0;
+  }
+
+  .journey-highlights-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .stay-card {
+    flex-direction: column;
+  }
+
+  .stay-card-side {
+    width: 100%;
+    flex-direction: row;
+    justify-content: space-between;
+    border-right: none;
+    border-bottom: 1px solid var(--color-border, #E5E0D8);
+    padding: 0.75rem 1.25rem;
+  }
+
+  .stay-meta-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .day-accordion-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .header-right {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .event-timeline-item {
+    gap: 0.75rem;
+  }
+
+  .event-time-column {
+    width: 65px;
+  }
+}
+
+/* ── 8. PRINT STYLESHEET (A4 Clean Output) ───────────────────────────────── */
+@media print {
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+
+  .navbar,
+  .itinerary-nav-tabs-bar,
+  .header-actions-row,
+  .demo-badge-container,
+  .accordion-arrow,
+  .btn,
+  .accordion-toggle-btns {
+    display: none !important;
+  }
+
+  .itinerary-v2-container,
+  .itinerary-header-band,
+  .journey-strip-wrapper,
+  .stay-card,
+  .day-accordion-card,
+  .route-map-wrapper {
+    border: 1px solid #cccccc !important;
+    box-shadow: none !important;
+    page-break-inside: avoid;
+  }
+
+  .day-accordion-content {
+    display: block !important;
+  }
+}

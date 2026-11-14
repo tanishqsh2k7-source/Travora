@@ -1,8 +1,32 @@
 import React, { useState, useEffect, useRef } from "react";
-import type { CreateTripRequest, TravelStyle, TransportPreference } from "@travora/contracts";
-import { getPreferences } from "../api/client";
-import { SparklesIcon, CalendarIcon, MapPinIcon, CurrencyIcon, ArrowRightIcon } from "./Icons";
-import { HeroBanner } from "./HeroBanner";
+import type {
+  CreateTripRequest,
+  TravelStyle,
+  TransportPreference,
+  PacePreference,
+} from "@travora/contracts";
+import { getPreferences, parsePromptToTrip } from "../api/client.js";
+import { CityAutocomplete } from "./CityAutocomplete.js";
+import { HeroBanner } from "./HeroBanner.js";
+import { LandingSections } from "./LandingSections.js";
+import {
+  Button,
+  Chip,
+  SegmentedControl,
+  TravellerPopover,
+  DateRangePicker,
+  type TravellerConfig,
+  type SegmentedOption,
+} from "./ui/index.js";
+import {
+  ArrowLeftRight,
+  ChevronDown,
+  Sparkles,
+  SlidersHorizontal,
+  Compass,
+  AlertCircle,
+  FileText,
+} from "lucide-react";
 
 interface TripBuilderProps {
   onSubmit: (trip: CreateTripRequest) => void;
@@ -10,104 +34,178 @@ interface TripBuilderProps {
 }
 
 const INTEREST_OPTIONS = [
-  "history",
-  "culture",
-  "museums",
-  "food",
-  "architecture",
-  "nature",
-  "photography",
-  "shopping",
-  "nightlife",
+  { id: "culture", label: "Culture & museums" },
+  { id: "food", label: "Food & wine" },
+  { id: "nature", label: "Outdoor & nature" },
+  { id: "history", label: "Historic sites" },
+  { id: "shopping", label: "Shopping" },
+  { id: "architecture", label: "Architecture" },
+  { id: "nightlife", label: "Nightlife" },
+  { id: "relaxing", label: "Relaxing" },
+  { id: "family", label: "Family-friendly" },
+  { id: "hidden-gems", label: "Hidden gems" },
 ];
 
-const PRESETS: Array<{ label: string; description: string; data: CreateTripRequest }> = [
-  {
-    label: "Lisbon 4-Day Culture & Food",
-    description: "Belém Tower, Jerónimos, Tram 28, Pastel de Nata, and fado vibes.",
-    data: {
-      origin: "London, UK",
-      destination: "Lisbon, Portugal",
-      startDate: "2027-05-10",
-      endDate: "2027-05-13",
-      timezone: "Europe/Lisbon",
-      travellers: { adults: 2, children: 0, infants: 0 },
-      budget: { amount: 150000, currency: "EUR", flexibilityPct: 10 }, // €1,500
-      interests: ["history", "culture", "food", "museums"],
-      travelStyle: "balanced",
-      transportPreferences: ["public_transit", "walking"],
-      constraints: { accessibility: [], dietary: [], pace: "moderate" },
-    },
-  },
-  {
-    label: "Tokyo 5-Day Highlights",
-    description: "Senso-ji, Shibuya Sky, Akihabara, sushi markets, and TeamLab.",
-    data: {
-      origin: "Delhi, India",
-      destination: "Tokyo, Japan",
-      startDate: "2027-04-10",
-      endDate: "2027-04-14",
-      timezone: "Asia/Tokyo",
-      travellers: { adults: 2, children: 0, infants: 0 },
-      budget: { amount: 25000000, currency: "INR", flexibilityPct: 5 }, // ₹2,50,000
-      interests: ["culture", "food", "shopping", "museums"],
-      travelStyle: "balanced",
-      transportPreferences: ["public_transit"],
-      constraints: { accessibility: [], dietary: ["vegetarian"], pace: "moderate" },
-    },
-  },
-  {
-    label: "Paris 3-Day Romance & Art",
-    description: "Louvre, Eiffel Tower, Montmartre, Seine cruise, and patisseries.",
-    data: {
-      origin: "New York, USA",
-      destination: "Paris, France",
-      startDate: "2027-06-15",
-      endDate: "2027-06-17",
-      timezone: "Europe/Paris",
-      travellers: { adults: 2, children: 0, infants: 0 },
-      budget: { amount: 220000, currency: "USD", flexibilityPct: 15 }, // $2,200
-      interests: ["museums", "architecture", "food", "history"],
-      travelStyle: "relaxed",
-      transportPreferences: ["public_transit", "walking"],
-      constraints: { accessibility: [], dietary: [], pace: "relaxed" },
-    },
-  },
+const DIETARY_SUGGESTIONS = [
+  "Vegetarian",
+  "Vegan",
+  "Gluten-free",
+  "Halal",
+  "Step-free access",
+  "Near public transit",
 ];
+
+const ROTATING_PLACEHOLDERS = [
+  "A 5-day food and architecture trip to Tokyo for two, moderate budget, not too rushed.",
+  "Family road trip from Lisbon to Porto in October, staying in small hotels, with a 7-year-old.",
+  "Solo weekend in Edinburgh focused on ghost tours, cozy pubs and bookshops under £500.",
+];
+
+const PROMPT_IDEA_CHIPS = [
+  "4 days in Paris for a couple, art & gourmet food",
+  "5 days luxury trip to Udaipur & Jodhpur for 2",
+  "Tokyo 6 days: anime, tech, ramen, moderate pace",
+  "Lisbon coastal weekend, historic trams, €1200",
+];
+
+const TRAVEL_STYLES: SegmentedOption<TravelStyle>[] = [
+  { value: "balanced", label: "Balanced" },
+  { value: "relaxed", label: "Relaxed" },
+  { value: "luxury", label: "Luxury" },
+  { value: "budget", label: "Budget" },
+];
+
+const PACE_OPTIONS: SegmentedOption<PacePreference>[] = [
+  { value: "relaxed", label: "Relaxed" },
+  { value: "moderate", label: "Moderate" },
+  { value: "fast", label: "Fast" },
+];
+
+const CURRENCIES = ["USD", "EUR", "GBP", "INR", "JPY", "CAD", "AUD", "CHF", "SGD", "AED"];
+
+const STORAGE_KEY = "travora_planner_draft";
 
 export function TripBuilder({ onSubmit, isLoading }: TripBuilderProps) {
+  // Tab state: "details" | "prompt"
+  const [activeTab, setActiveTab] = useState<"details" | "prompt">("details");
+
+  // Tab 1 fields
   const [origin, setOrigin] = useState("London, UK");
   const [destination, setDestination] = useState("Lisbon, Portugal");
   const [startDate, setStartDate] = useState("2027-05-10");
-  const [endDate, setEndDate] = useState("2027-05-13");
-  const [adults, setAdults] = useState(2);
-  const [children, setChildren] = useState(0);
-  const [currency, setCurrency] = useState("EUR");
-  const [budgetDisplay, setBudgetDisplay] = useState("1500");
+  const [endDate, setEndDate] = useState("2027-05-14");
+  const [travellers, setTravellers] = useState<TravellerConfig>({
+    adults: 2,
+    children: 0,
+    rooms: 1,
+  });
+
+  // More options disclosure
+  const [isMoreOptionsOpen, setIsMoreOptionsOpen] = useState(false);
+  const [currency, setCurrency] = useState(() => {
+    try {
+      const saved = localStorage.getItem("travora_currency");
+      if (saved) return saved;
+      const detected = Intl.NumberFormat().resolvedOptions().currency?.toUpperCase();
+      return CURRENCIES.includes(detected || "") ? (detected as string) : "USD";
+    } catch {
+      return "USD";
+    }
+  });
+  const [budgetDisplay, setBudgetDisplay] = useState("2000");
   const [travelStyle, setTravelStyle] = useState<TravelStyle>("balanced");
+  const [pace, setPace] = useState<PacePreference>("moderate");
   const [selectedInterests, setSelectedInterests] = useState<string[]>([
-    "history",
     "culture",
     "food",
+    "history",
   ]);
-  const [pace, setPace] = useState<"relaxed" | "moderate" | "fast">("moderate");
   const [dietary, setDietary] = useState("");
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const formRef = useRef<HTMLDivElement>(null);
 
-  const handleOpenForm = () => {
-    setIsFormOpen(true);
-    setTimeout(() => {
-      formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-    }, 60);
-  };
+  // Tab 2 fields
+  const [promptText, setPromptText] = useState("");
+  const [isParsingPrompt, setIsParsingPrompt] = useState(false);
+  const [promptFeedback, setPromptFeedback] = useState<string | null>(null);
+  const [placeholderIndex, setPlaceholderIndex] = useState(0);
 
+  // Validation errors
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [summaryError, setSummaryError] = useState<string | null>(null);
+
+  const plannerCardRef = useRef<HTMLDivElement>(null);
+
+  // Rotate prompt placeholder
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setPlaceholderIndex((prev) => (prev + 1) % ROTATING_PLACEHOLDERS.length);
+    }, 4500);
+    return () => clearInterval(timer);
+  }, []);
+
+  // Restore draft from sessionStorage
+  useEffect(() => {
+    try {
+      const saved = sessionStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.origin) setOrigin(parsed.origin);
+        if (parsed.destination) setDestination(parsed.destination);
+        if (parsed.startDate) setStartDate(parsed.startDate);
+        if (parsed.endDate) setEndDate(parsed.endDate);
+        if (parsed.travellers) setTravellers(parsed.travellers);
+        if (parsed.currency) setCurrency(parsed.currency);
+        if (parsed.budgetDisplay) setBudgetDisplay(parsed.budgetDisplay);
+        if (parsed.travelStyle) setTravelStyle(parsed.travelStyle);
+        if (parsed.pace) setPace(parsed.pace);
+        if (parsed.selectedInterests) setSelectedInterests(parsed.selectedInterests);
+        if (parsed.dietary) setDietary(parsed.dietary);
+      }
+    } catch {
+      // sessionStorage unavailable
+    }
+  }, []);
+
+  // Autosave draft to sessionStorage
+  useEffect(() => {
+    try {
+      const draft = {
+        origin,
+        destination,
+        startDate,
+        endDate,
+        travellers,
+        currency,
+        budgetDisplay,
+        travelStyle,
+        pace,
+        selectedInterests,
+        dietary,
+      };
+      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(draft));
+    } catch {
+      // ignore
+    }
+  }, [
+    origin,
+    destination,
+    startDate,
+    endDate,
+    travellers,
+    currency,
+    budgetDisplay,
+    travelStyle,
+    pace,
+    selectedInterests,
+    dietary,
+  ]);
+
+  // Fetch backend preferences if available
   useEffect(() => {
     getPreferences()
       .then((pref) => {
         if (pref.preferredCurrency) setCurrency(pref.preferredCurrency);
         if (pref.travelStyle) setTravelStyle(pref.travelStyle as TravelStyle);
-        if (pref.pace) setPace(pref.pace as any);
+        if (pref.pace) setPace(pref.pace as PacePreference);
         if (pref.dietaryRestrictions && pref.dietaryRestrictions.length > 0) {
           setDietary(pref.dietaryRestrictions.join(", "));
         }
@@ -118,52 +216,112 @@ export function TripBuilder({ onSubmit, isLoading }: TripBuilderProps) {
       .catch(() => {});
   }, []);
 
-  const applyPreset = (preset: (typeof PRESETS)[0]) => {
-    const d = preset.data;
-    setOrigin(d.origin);
-    setDestination(d.destination);
-    setStartDate(d.startDate);
-    setEndDate(d.endDate);
-    setAdults(d.travellers.adults);
-    setChildren(d.travellers.children);
-    setCurrency(d.budget.currency);
-    setBudgetDisplay(String(d.budget.amount / 100));
-    setTravelStyle(d.travelStyle);
-    setSelectedInterests(d.interests);
-    setPace(d.constraints.pace || "moderate");
-    setDietary(d.constraints.dietary.join(", ") || "");
-    setIsFormOpen(true);
-    setTimeout(() => {
-      formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-    }, 60);
+  const handleCurrencyChange = (newCurr: string) => {
+    setCurrency(newCurr);
+    try {
+      localStorage.setItem("travora_currency", newCurr);
+    } catch {
+      // ignore
+    }
   };
 
-  const toggleInterest = (interest: string) => {
+  const handleSwapLocations = () => {
+    const temp = origin;
+    setOrigin(destination);
+    setDestination(temp);
+  };
+
+  const scrollToPlanner = () => {
+    plannerCardRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+  };
+
+  const handleSelectDestination = (dest: string) => {
+    setDestination(dest);
+    setActiveTab("details");
+    scrollToPlanner();
+  };
+
+  const handleApplyTheme = (theme: {
+    interests: string[];
+    pace: PacePreference;
+    style: TravelStyle;
+  }) => {
+    setSelectedInterests(theme.interests);
+    setPace(theme.pace);
+    setTravelStyle(theme.style);
+    setIsMoreOptionsOpen(true);
+    setActiveTab("details");
+    scrollToPlanner();
+  };
+
+  const toggleInterest = (id: string) => {
     setSelectedInterests((prev) =>
-      prev.includes(interest) ? prev.filter((i) => i !== interest) : [...prev, interest]
+      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
     );
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleAddDietary = (suggestion: string) => {
+    const current = dietary.trim();
+    if (!current) {
+      setDietary(suggestion);
+    } else if (!current.toLowerCase().includes(suggestion.toLowerCase())) {
+      setDietary(`${current}, ${suggestion}`);
+    }
+  };
 
-    const numericBudget = parseFloat(budgetDisplay);
-    if (isNaN(numericBudget) || numericBudget <= 0) {
-      alert("Please enter a valid budget amount");
-      return;
+  const validate = (): boolean => {
+    const newErrors: Record<string, string> = {};
+
+    if (!origin.trim()) {
+      newErrors.origin = "Please provide a starting departure city.";
+    }
+    if (!destination.trim()) {
+      newErrors.destination = "Please specify a destination.";
+    }
+    if (!startDate) {
+      newErrors.startDate = "Select departure date.";
+    }
+    if (!endDate) {
+      newErrors.endDate = "Select return date.";
+    } else if (startDate && endDate <= startDate) {
+      newErrors.endDate = "Return date must be strictly after departure date.";
     }
 
-    const amountInSmallestUnit = Math.round(numericBudget * 100);
+    const numBudget = parseFloat(budgetDisplay);
+    if (isNaN(numBudget) || numBudget <= 0) {
+      newErrors.budget = "Please enter a realistic budget amount.";
+    }
 
+    setErrors(newErrors);
+
+    if (Object.keys(newErrors).length > 0) {
+      setSummaryError("Please review the highlighted fields before submitting.");
+      return false;
+    }
+
+    setSummaryError(null);
+    return true;
+  };
+
+  const handleSubmitDetails = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!validate()) return;
+
+    const numericBudget = parseFloat(budgetDisplay);
+    const amountInSmallestUnit = Math.round(numericBudget * 100);
     const transportPreferences: TransportPreference[] = ["public_transit", "walking"];
 
     const tripRequest: CreateTripRequest = {
-      origin,
-      destination,
+      origin: origin.trim(),
+      destination: destination.trim(),
       startDate,
       endDate,
       timezone: "UTC",
-      travellers: { adults, children, infants: 0 },
+      travellers: {
+        adults: travellers.adults,
+        children: travellers.children,
+        infants: 0,
+      },
       budget: {
         amount: amountInSmallestUnit,
         currency,
@@ -173,7 +331,7 @@ export function TripBuilder({ onSubmit, isLoading }: TripBuilderProps) {
       travelStyle,
       transportPreferences,
       constraints: {
-        accessibility: [],
+        accessibility: dietary.toLowerCase().includes("step-free") ? ["wheelchair_accessible"] : [],
         dietary: dietary ? dietary.split(",").map((s) => s.trim()).filter(Boolean) : [],
         pace,
       },
@@ -182,248 +340,367 @@ export function TripBuilder({ onSubmit, isLoading }: TripBuilderProps) {
     onSubmit(tripRequest);
   };
 
+  const handlePromptParse = async (autoSubmit: boolean) => {
+    if (!promptText.trim()) return;
+    setIsParsingPrompt(true);
+    setPromptFeedback(null);
+
+    try {
+      const { tripRequest, summary } = await parsePromptToTrip(promptText.trim());
+
+      setOrigin(tripRequest.origin);
+      setDestination(tripRequest.destination);
+      setStartDate(tripRequest.startDate);
+      setEndDate(tripRequest.endDate);
+      setTravellers({
+        adults: tripRequest.travellers.adults,
+        children: tripRequest.travellers.children,
+        rooms: Math.max(1, Math.ceil((tripRequest.travellers.adults + tripRequest.travellers.children) / 2)),
+      });
+      setCurrency(tripRequest.budget.currency);
+      setBudgetDisplay(String(tripRequest.budget.amount / 100));
+      setTravelStyle(tripRequest.travelStyle);
+      setSelectedInterests(tripRequest.interests);
+      setPace(tripRequest.constraints.pace || "moderate");
+      setDietary(tripRequest.constraints.dietary.join(", ") || "");
+
+      if (summary) {
+        setPromptFeedback(summary);
+      }
+
+      if (autoSubmit) {
+        onSubmit(tripRequest);
+      } else {
+        setActiveTab("details");
+        scrollToPlanner();
+      }
+    } catch (err) {
+      setPromptFeedback(
+        `Could not extract trip: ${err instanceof Error ? err.message : String(err)}`
+      );
+    } finally {
+      setIsParsingPrompt(false);
+    }
+  };
+
+  // Formatted budget preview
+  const budgetNum = parseFloat(budgetDisplay) || 0;
+  const formattedBudgetPreview = new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: CURRENCIES.includes(currency) ? currency : "USD",
+    maximumFractionDigits: 0,
+  }).format(budgetNum);
+
   return (
-    <div className="trip-builder">
-      {/* Vibrant Hero Section inspired by user's travel vibe banner */}
-      <HeroBanner onCraftTrip={handleOpenForm} isFormOpen={isFormOpen} />
+    <div className="trip-builder-editorial">
+      {/* Editorial Hero with Overlapping Planner */}
+      <HeroBanner>
+        <div id="planner" className="planner-unified-card" ref={plannerCardRef}>
+          {/* Planner Card Header Tabs */}
+          <div className="planner-tabs-bar" role="tablist">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={activeTab === "details"}
+              className={`planner-tab-btn ${activeTab === "details" ? "active" : ""}`}
+              onClick={() => setActiveTab("details")}
+            >
+              <Compass className="w-4 h-4" />
+              <span>Plan with details</span>
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={activeTab === "prompt"}
+              className={`planner-tab-btn ${activeTab === "prompt" ? "active" : ""}`}
+              onClick={() => setActiveTab("prompt")}
+            >
+              <FileText className="w-4 h-4" />
+              <span>Describe your trip</span>
+            </button>
+          </div>
 
-      {!isFormOpen ? (
-        <div className="hero-presets-strip">
-          <div className="presets-container">
-            <span className="presets-label">⚡ Or Choose a Quick Destination Preset:</span>
-            <div className="preset-chips">
-              {PRESETS.map((preset, idx) => (
+          {/* ──────────────── TAB 1: PLAN WITH DETAILS ──────────────── */}
+          {activeTab === "details" && (
+            <form onSubmit={handleSubmitDetails} className="planner-details-form" noValidate>
+              {summaryError && (
+                <div className="planner-error-banner" role="alert">
+                  <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                  <span>{summaryError}</span>
+                </div>
+              )}
+
+              {/* Airline-style horizontal bar */}
+              <div className="planner-top-bar">
+                {/* 1. From */}
+                <div className="planner-bar-segment">
+                  <label className="bar-segment-label">Starting from</label>
+                  <CityAutocomplete
+                    value={origin}
+                    onChange={(val) => {
+                      setOrigin(val);
+                      if (errors.origin) setErrors((prev) => ({ ...prev, origin: "" }));
+                    }}
+                    placeholder="Departure city (e.g. London, Delhi, NYC)"
+                    className={errors.origin ? "has-error" : ""}
+                  />
+                  {errors.origin && <span className="field-error-text">{errors.origin}</span>}
+                </div>
+
+                {/* Swap button */}
+                <div className="planner-swap-col">
+                  <button
+                    type="button"
+                    className="planner-swap-btn"
+                    onClick={handleSwapLocations}
+                    aria-label="Swap departure and destination cities"
+                    title="Swap locations"
+                  >
+                    <ArrowLeftRight className="w-4 h-4" />
+                  </button>
+                </div>
+
+                {/* 2. To */}
+                <div className="planner-bar-segment">
+                  <label className="bar-segment-label">Where to</label>
+                  <CityAutocomplete
+                    value={destination}
+                    onChange={(val) => {
+                      setDestination(val);
+                      if (errors.destination) setErrors((prev) => ({ ...prev, destination: "" }));
+                    }}
+                    placeholder="Destination (e.g. Lisbon, Tokyo, Paris)"
+                    className={errors.destination ? "has-error" : ""}
+                  />
+                  {errors.destination && (
+                    <span className="field-error-text">{errors.destination}</span>
+                  )}
+                </div>
+
+                {/* 3. Dates */}
+                <div className="planner-bar-segment date-segment">
+                  <DateRangePicker
+                    startDate={startDate}
+                    endDate={endDate}
+                    onChange={(start, end) => {
+                      setStartDate(start);
+                      setEndDate(end);
+                      if (errors.startDate || errors.endDate) {
+                        setErrors((prev) => ({ ...prev, startDate: "", endDate: "" }));
+                      }
+                    }}
+                    label="Dates"
+                    error={errors.endDate || errors.startDate}
+                  />
+                </div>
+
+                {/* 4. Travellers */}
+                <div className="planner-bar-segment travellers-segment">
+                  <TravellerPopover
+                    value={travellers}
+                    onChange={(t) => setTravellers(t)}
+                  />
+                </div>
+              </div>
+
+              {/* More options disclosure toggle */}
+              <div className="planner-disclosure-toggle-row">
                 <button
-                  key={idx}
                   type="button"
-                  className="preset-chip"
-                  onClick={() => applyPreset(preset)}
-                  title={preset.description}
+                  className="more-options-toggle-btn"
+                  onClick={() => setIsMoreOptionsOpen(!isMoreOptionsOpen)}
+                  aria-expanded={isMoreOptionsOpen}
                 >
-                  <strong>{preset.label.split(" ")[0]}</strong> {preset.label.slice(preset.label.indexOf(" "))}
+                  <SlidersHorizontal className="w-4 h-4" />
+                  <span>{isMoreOptionsOpen ? "Hide options" : "More options (Budget, style, pace, dietary)"}</span>
+                  <ChevronDown className={`w-4 h-4 chevron ${isMoreOptionsOpen ? "rotate" : ""}`} />
                 </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      ) : (
-        <div ref={formRef} className="builder-form-wrapper fade-in-up">
-          <div className="builder-header">
-            <div className="builder-header-top">
-              <div className="hero-tag">
-                <SparklesIcon className="w-4 h-4" /> Customized Multi-Agent Itinerary Builder
               </div>
-              <button
-                type="button"
-                className="btn-collapse-toggle"
-                onClick={() => setIsFormOpen(false)}
-                title="Collapse form"
-              >
-                ▲ Close Form
-              </button>
-            </div>
-            <h2>Where do you want to travel?</h2>
-            <p className="hero-subtitle">
-              Configure your trip details. Our Level 3 Multi-Agent architecture coordinates destination
-              research, flights, hotels, live weather, pure arithmetic budgets, and route TSP heuristics.
-            </p>
-          </div>
 
-          <div className="presets-container">
-            <span className="presets-label">⚡ Quick Presets:</span>
-            <div className="preset-chips">
-              {PRESETS.map((preset, idx) => (
-                <button
-                  key={idx}
-                  type="button"
-                  className="preset-chip"
-                  onClick={() => applyPreset(preset)}
-                  title={preset.description}
+              {/* More options collapsed body */}
+              {isMoreOptionsOpen && (
+                <div className="planner-more-options-body">
+                  <div className="more-options-grid">
+                    {/* Budget row */}
+                    <div className="option-col budget-col">
+                      <label className="field-label">Target Trip Budget</label>
+                      <div className="budget-input-group">
+                        <select
+                          value={currency}
+                          onChange={(e) => handleCurrencyChange(e.target.value)}
+                          className="currency-select"
+                          aria-label="Currency"
+                        >
+                          {CURRENCIES.map((c) => (
+                            <option key={c} value={c}>
+                              {c}
+                            </option>
+                          ))}
+                        </select>
+                        <input
+                          type="number"
+                          min="1"
+                          step="10"
+                          value={budgetDisplay}
+                          onChange={(e) => setBudgetDisplay(e.target.value)}
+                          placeholder="e.g. 2000"
+                          className="budget-number-input"
+                          aria-label="Budget amount"
+                        />
+                      </div>
+                      <span className="budget-preview-hint">
+                        Formatted: <strong>{formattedBudgetPreview}</strong>
+                      </span>
+                      {errors.budget && <span className="field-error-text">{errors.budget}</span>}
+                    </div>
+
+                    {/* Travel Style */}
+                    <div className="option-col">
+                      <SegmentedControl
+                        label="Travel Style"
+                        value={travelStyle}
+                        onChange={(v) => setTravelStyle(v)}
+                        options={TRAVEL_STYLES}
+                      />
+                    </div>
+
+                    {/* Daily Pace */}
+                    <div className="option-col">
+                      <SegmentedControl
+                        label="Daily Pace"
+                        value={pace}
+                        onChange={(v) => setPace(v)}
+                        options={PACE_OPTIONS}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Interests toggle chips */}
+                  <div className="option-block mt-4">
+                    <label className="field-label">Interests & Activities</label>
+                    <div className="interests-chip-grid">
+                      {INTEREST_OPTIONS.map((item) => {
+                        const isSelected = selectedInterests.includes(item.id);
+                        return (
+                          <Chip
+                            key={item.id}
+                            label={item.label}
+                            selected={isSelected}
+                            onToggle={() => toggleInterest(item.id)}
+                          />
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Dietary & Accessibility notes */}
+                  <div className="option-block mt-4">
+                    <label className="field-label">Dietary & Accessibility Notes</label>
+                    <textarea
+                      rows={2}
+                      value={dietary}
+                      onChange={(e) => setDietary(e.target.value)}
+                      placeholder="e.g. Vegetarian, elevator access preferred, stroller-friendly..."
+                      className="editorial-textarea"
+                    />
+                    <div className="dietary-suggestions-row">
+                      <span className="suggestions-label">Quick suggestions:</span>
+                      {DIETARY_SUGGESTIONS.map((sug) => (
+                        <button
+                          key={sug}
+                          type="button"
+                          className="dietary-pill-btn"
+                          onClick={() => handleAddDietary(sug)}
+                        >
+                          + {sug}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Submit CTA */}
+              <div className="planner-submit-bar">
+                <Button
+                  type="submit"
+                  variant="primary"
+                  size="lg"
+                  isLoading={isLoading}
+                  className="planner-plan-btn"
                 >
-                  <strong>{preset.label.split(" ")[0]}</strong> {preset.label.slice(preset.label.indexOf(" "))}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <form className="builder-form" onSubmit={handleSubmit}>
-            <div className="form-grid">
-              {/* Origin & Destination */}
-              <div className="form-group">
-                <label>
-                  <MapPinIcon className="w-4 h-4 text-muted" /> Origin City
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={origin}
-                  onChange={(e) => setOrigin(e.target.value)}
-                  placeholder="e.g. London, UK"
-                />
+                  Plan my trip
+                </Button>
               </div>
+            </form>
+          )}
 
-              <div className="form-group">
-                <label>
-                  <MapPinIcon className="w-4 h-4 text-emerald" /> Destination
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={destination}
-                  onChange={(e) => setDestination(e.target.value)}
-                  placeholder="e.g. Lisbon, Portugal"
-                />
-              </div>
-
-              {/* Dates */}
-              <div className="form-group">
-                <label>
-                  <CalendarIcon className="w-4 h-4 text-muted" /> Start Date
-                </label>
-                <input
-                  type="date"
-                  required
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                />
-              </div>
-
-              <div className="form-group">
-                <label>
-                  <CalendarIcon className="w-4 h-4 text-muted" /> End Date
-                </label>
-                <input
-                  type="date"
-                  required
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                />
-              </div>
-
-              {/* Travellers */}
-              <div className="form-group">
-                <label>Adults (18+)</label>
-                <input
-                  type="number"
-                  min="1"
-                  max="10"
-                  required
-                  value={adults}
-                  onChange={(e) => setAdults(parseInt(e.target.value) || 1)}
-                />
-              </div>
-
-              <div className="form-group">
-                <label>Children</label>
-                <input
-                  type="number"
-                  min="0"
-                  max="10"
-                  value={children}
-                  onChange={(e) => setChildren(parseInt(e.target.value) || 0)}
-                />
-              </div>
-
-              {/* Budget */}
-              <div className="form-group">
-                <label>
-                  <CurrencyIcon className="w-4 h-4 text-muted" /> Currency
-                </label>
-                <select value={currency} onChange={(e) => setCurrency(e.target.value)}>
-                  <option value="EUR">EUR (€)</option>
-                  <option value="USD">USD ($)</option>
-                  <option value="INR">INR (₹)</option>
-                  <option value="GBP">GBP (£)</option>
-                </select>
-              </div>
-
-              <div className="form-group">
-                <label>Target Budget</label>
-                <input
-                  type="number"
-                  step="any"
-                  min="50"
-                  required
-                  value={budgetDisplay}
-                  onChange={(e) => setBudgetDisplay(e.target.value)}
-                  placeholder="e.g. 1500"
-                />
-              </div>
-
-              {/* Travel Style */}
-              <div className="form-group">
-                <label>Travel Style</label>
-                <select
-                  value={travelStyle}
-                  onChange={(e) => setTravelStyle(e.target.value as TravelStyle)}
-                >
-                  <option value="balanced">Balanced (Well-rounded)</option>
-                  <option value="relaxed">Relaxed (Spacious schedule)</option>
-                  <option value="budget">Budget (Cost-conscious)</option>
-                  <option value="luxury">Luxury (Premium)</option>
-                  <option value="fast-paced">Fast-Paced (Active)</option>
-                </select>
-              </div>
-
-              {/* Daily Pace */}
-              <div className="form-group">
-                <label>Daily Pace</label>
-                <select value={pace} onChange={(e) => setPace(e.target.value as any)}>
-                  <option value="relaxed">Relaxed (~2 places / day)</option>
-                  <option value="moderate">Moderate (~3-4 places / day)</option>
-                  <option value="fast">Fast (~5+ places / day)</option>
-                </select>
-              </div>
-            </div>
-
-            {/* Interests */}
-            <div className="interests-section">
-              <label className="section-label">Travel Interests & Passions</label>
-              <div className="tag-cloud">
-                {INTEREST_OPTIONS.map((interest) => {
-                  const active = selectedInterests.includes(interest);
-                  return (
-                    <button
-                      type="button"
-                      key={interest}
-                      className={`tag-pill ${active ? "active" : ""}`}
-                      onClick={() => toggleInterest(interest)}
-                    >
-                      {active ? "✓ " : "+ "}
-                      {interest.charAt(0).toUpperCase() + interest.slice(1)}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Dietary Constraints */}
-            <div className="constraints-section">
-              <label className="section-label">Dietary or Accessibility Needs (Optional)</label>
-              <input
-                type="text"
-                value={dietary}
-                onChange={(e) => setDietary(e.target.value)}
-                placeholder="e.g. vegetarian, gluten-free, wheelchair accessible"
+          {/* ──────────────── TAB 2: DESCRIBE YOUR TRIP ──────────────── */}
+          {activeTab === "prompt" && (
+            <div className="planner-prompt-view">
+              <label className="field-label">Describe your ideal itinerary in plain words</label>
+              <textarea
+                rows={3}
+                value={promptText}
+                onChange={(e) => setPromptText(e.target.value)}
+                placeholder={ROTATING_PLACEHOLDERS[placeholderIndex]}
+                className="prompt-large-textarea"
               />
-            </div>
 
-            <div className="form-actions">
-              <button type="submit" className="btn btn-primary btn-lg" disabled={isLoading}>
-                {isLoading ? (
-                  <>
-                    <span className="spinner"></span> Dispatching Multi-Agent Graph...
-                  </>
-                ) : (
-                  <>
-                    <SparklesIcon className="w-5 h-5" /> Generate AI Multi-Agent Itinerary
-                  </>
-                )}
-              </button>
+              {/* 4 Prompt idea chips */}
+              <div className="prompt-ideas-row">
+                <span className="prompt-ideas-label">Sample prompts:</span>
+                <div className="prompt-chips-wrap">
+                  {PROMPT_IDEA_CHIPS.map((chip) => (
+                    <button
+                      key={chip}
+                      type="button"
+                      className="prompt-idea-chip"
+                      onClick={() => setPromptText(chip)}
+                    >
+                      {chip}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {promptFeedback && (
+                <div className="prompt-feedback-notice">
+                  <span>{promptFeedback}</span>
+                </div>
+              )}
+
+              <div className="prompt-action-row">
+                <Button
+                  type="button"
+                  variant="primary"
+                  size="lg"
+                  isLoading={isLoading || isParsingPrompt}
+                  onClick={() => handlePromptParse(true)}
+                  disabled={!promptText.trim()}
+                >
+                  Plan my trip
+                </Button>
+
+                <button
+                  type="button"
+                  className="prompt-secondary-btn"
+                  onClick={() => handlePromptParse(false)}
+                  disabled={!promptText.trim() || isParsingPrompt}
+                >
+                  {isParsingPrompt ? "Extracting..." : "Fill the form from my description"}
+                </button>
+              </div>
             </div>
-          </form>
+          )}
         </div>
-      )}
+      </HeroBanner>
+
+      {/* Landing Page Editorial Content */}
+      <LandingSections
+        onSelectDestination={handleSelectDestination}
+        onApplyTheme={handleApplyTheme}
+      />
     </div>
   );
 }

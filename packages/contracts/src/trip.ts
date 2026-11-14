@@ -68,3 +68,15 @@ export const TripResponseSchema = z.object({
 
 export type TripResponse = z.infer<typeof TripResponseSchema>;
 
+export const ParsePromptRequestSchema = z.object({
+  prompt: z.string().min(1, "Prompt cannot be empty").trim(),
+});
+export type ParsePromptRequest = z.infer<typeof ParsePromptRequestSchema>;
+
+export const ParsePromptResponseSchema = z.object({
+  tripRequest: CreateTripRequestSchema,
+  summary: z.string().optional(),
+});
+export type ParsePromptResponse = z.infer<typeof ParsePromptResponseSchema>;
+
+

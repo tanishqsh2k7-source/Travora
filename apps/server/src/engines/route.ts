@@ -306,7 +306,7 @@ export function optimizeRoutes(input: RouteOptimizerInput): RouteOptimizerResult
         type: "activity",
         transferFromPrevMin: transferMin,
         distanceFromPrevMeters: distanceMeters,
-        notes: place.description,
+        notes: place.description || `Explore the architectural charm, rich cultural history, and iconic highlights of ${place.name}.`,
       });
 
       currentMinutes = departureMinutes;
@@ -338,9 +338,59 @@ export function optimizeRoutes(input: RouteOptimizerInput): RouteOptimizerResult
       totalDayActivityMin += checkinDuration;
     }
 
+    // Extract city name and activity details for rich day narrative
+    let cityName = "Destination";
+    if (dayHotel?.address) {
+      const parts = dayHotel.address.split(",").map((s) => s.trim());
+      cityName = parts.length >= 2 ? parts[parts.length - 2] || parts[0] : parts[0];
+    } else if (cluster.length > 0 && cluster[0].address) {
+      const parts = cluster[0].address.split(",").map((s) => s.trim());
+      cityName = parts.length >= 2 ? parts[parts.length - 2] || parts[0] : parts[0];
+    }
+
+    const activityStops = stops.filter((s) => s.type === "activity");
+    const attractionsList = activityStops.map((s) => s.name);
+    const primaryAttraction = attractionsList[0];
+    const secondaryAttraction = attractionsList[1];
+
+    let dayTheme = "";
+    if (dayIdx === 0) {
+      dayTheme = `Arrival and Exploration in ${cityName}`;
+    } else if (hotelStatus === "switch_hotel") {
+      dayTheme = `${cityName} to ${dayHotel?.name ?? "New District"} – Exploring the New Base`;
+    } else if (dayIdx + 1 === daysCount) {
+      dayTheme = `Exploring ${cityName}'s Royal Heritage & Grand Finale`;
+    } else if (primaryAttraction) {
+      dayTheme = secondaryAttraction
+        ? `Excursion to ${primaryAttraction} & Sunset at ${secondaryAttraction}`
+        : `Immersive Highlights of ${primaryAttraction}`;
+    } else {
+      dayTheme = `Cultural Landmarks & Local Immersion`;
+    }
+
+    const hotelDisplayName = dayHotel?.name ?? "your hotel";
+    const attractionsText = attractionsList.length > 0 ? attractionsList.join(", ") : "iconic cultural sights";
+
+    let narrativePlan = "";
+    if (dayIdx === 0) {
+      narrativePlan = `Begin your journey in the enchanting city of ${cityName}. After checking into ${hotelDisplayName}, refresh yourself before setting out to explore. Visit ${attractionsText}. As evening falls, enjoy a peaceful stroll, soaking in the sunset with a warm cup of coffee or local aperitif. Relax and unwind overnight at ${hotelDisplayName}.`;
+    } else if (hotelStatus === "switch_hotel") {
+      narrativePlan = `Travel to the vibrant new quarter of ${cityName} and check into ${hotelDisplayName}. Begin your exploration with a visit to ${attractionsText}. Enjoy an evening stroll around the scenic streets and bustling local markets before settling in for the night.`;
+    } else if (dayIdx + 1 === daysCount) {
+      narrativePlan = `Start your day with a delicious breakfast, then embark on a memorable tour of ${attractionsText}. Immerse yourself in the local heritage and artistic traditions. After a fulfilling day of exploration, return to ${hotelDisplayName} to collect your luggage and prepare for your onward journey.`;
+    } else {
+      narrativePlan = `Awaken to ${cityName}'s enchanting atmosphere and enjoy a hearty breakfast. Embark on a guided tour to ${attractionsText}. Break for lunch to savor authentic local cuisine, and take in the panoramic views before unwinding at your hotel for the night.`;
+    }
+
+    const nightStayLabel = dayHotel ? `${cityName} (${dayHotel.name})` : cityName;
+
     days.push({
       dayNumber: dayIdx + 1,
       date,
+      theme: dayTheme,
+      dayPlan: narrativePlan,
+      nightStay: nightStayLabel,
+      attractions: attractionsList,
       stops,
       totalTravelTimeMin: totalDayTravelMin,
       totalActivityTimeMin: totalDayActivityMin,

@@ -81,6 +81,9 @@ export async function replanNode(state: TravelState): Promise<TravelStateUpdate>
     dayNumber: affectedDayNum,
     date: originalDay.date,
     theme: "Indoor Culture & Art Exploration (Rain-Adapted)",
+    dayPlan: `Adapted for inclement weather: Spend an enriching day exploring indoor cultural treasures: ${singleDayResult.days[0].attractions?.join(", ") || "celebrated galleries and heritage sites"}. Enjoy warm indoor dining and leisurely visits shielded from rain.`,
+    nightStay: originalDay.nightStay,
+    attractions: singleDayResult.days[0].attractions,
     accommodation: originalDay.accommodation,
   };
 

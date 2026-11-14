@@ -4,6 +4,7 @@ import { BudgetBreakdownSchema } from "./budget.js";
 import { FlightOfferSchema } from "./flights.js";
 import { HotelOfferSchema } from "./hotels.js";
 import { WeatherForecastSchema } from "./weather.js";
+import { ItinerarySchema } from "./itinerary.js";
 
 export const PlanningRunStatusSchema = z.enum([
   "queued",
@@ -15,6 +16,7 @@ export const PlanningRunStatusSchema = z.enum([
 export type PlanningRunStatus = z.infer<typeof PlanningRunStatusSchema>;
 
 export const FinalPlanResponseSchema = z.object({
+  version: z.number().default(2),
   tripId: z.string(),
   runId: z.string(),
   destination: z.string(),
@@ -25,6 +27,7 @@ export const FinalPlanResponseSchema = z.object({
   }),
   summary: z.string(),
   itinerary: z.array(OptimizedDayScheduleSchema),
+  itineraryV2: ItinerarySchema.optional(),
   budgetBreakdown: BudgetBreakdownSchema,
   flightOptions: z.array(FlightOfferSchema).default([]),
   hotelOptions: z.array(HotelOfferSchema).default([]),

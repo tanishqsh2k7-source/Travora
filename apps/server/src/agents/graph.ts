@@ -12,7 +12,7 @@ import { criticNode } from "./nodes/critic.js";
 import { replanNode } from "./nodes/replan.js";
 import { aggregatorNode } from "./nodes/aggregator.js";
 
-export function createPlanningGraph(checkpointer = new MemorySaver()) {
+export function createPlanningGraph(checkpointer = new MemorySaver()): any {
   const workflow = new StateGraph(TravelStateAnnotation)
     .addNode("intake", intakeNode)
     .addNode("supervisor", supervisorNode)

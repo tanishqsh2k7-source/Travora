@@ -70,7 +70,7 @@ function resolveRouteInfo(origin: string, destination: string) {
     };
   }
   // Route: India
-  if (o.includes("delhi") || o.includes("mumbai") || o.includes("india") || d.includes("delhi") || d.includes("india")) {
+  if (o.includes("del") || o.includes("mumbai") || o.includes("india") || d.includes("del") || d.includes("india")) {
     return {
       originIata: o.slice(0, 3).toUpperCase(),
       destIata: d.slice(0, 3).toUpperCase(),

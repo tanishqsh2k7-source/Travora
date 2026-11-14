@@ -17,6 +17,8 @@
     "test:server": "npm run test --workspace=apps/server",
     "test:client": "npm run test --workspace=apps/client",
     "test:contracts": "npm run test --workspace=packages/contracts",
+    "images:optimize": "npm run images:optimize --workspace=@travora/client",
+    "images:check": "npm run images:check --workspace=@travora/client",
     "lint": "npm run lint --workspaces --if-present",
     "clean": "npm run clean --workspaces --if-present",
     "docker:up": "docker compose up -d",

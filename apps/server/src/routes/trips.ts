@@ -1,14 +1,30 @@
 import { Router } from "express";
 import mongoose from "mongoose";
-import { CreateTripRequestSchema, type TripResponse } from "@travora/contracts";
+import { CreateTripRequestSchema, ParsePromptRequestSchema, type TripResponse } from "@travora/contracts";
 import { requireAuth } from "../middleware/auth.js";
 import { validateBody } from "../middleware/validate.js";
 import { TripModel, TripVersionModel, type ITrip } from "../models/index.js";
+import { parseTripPrompt } from "../services/prompt-parser.js";
 
 export const tripsRouter = Router();
 
 // All trip endpoints require authentication
 tripsRouter.use(requireAuth);
+
+/**
+ * POST /api/v1/trips/parse-prompt
+ * Converts natural language user prompts (e.g. "plan a trip for me to Paris with 2 people")
+ * into a structured CreateTripRequest.
+ */
+tripsRouter.post("/parse-prompt", validateBody(ParsePromptRequestSchema), async (req, res, next) => {
+  try {
+    const { prompt } = req.body;
+    const result = await parseTripPrompt(prompt);
+    res.json(result);
+  } catch (err) {
+    next(err);
+  }
+});
 
 function formatTrip(trip: ITrip): TripResponse {
   return {

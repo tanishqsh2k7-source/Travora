@@ -1,87 +1,240 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import type { FinalPlanResponse } from "@travora/contracts";
+import { ItineraryHeader } from "./results/ItineraryHeader";
+import { JourneyStrip } from "./results/JourneyStrip";
+import { StaysTimeline } from "./results/StaysTimeline";
+import { DayByDayTimeline } from "./results/DayByDayTimeline";
+import { RouteMap } from "./results/RouteMap";
+import { BudgetView } from "./BudgetView";
+import "../styles/itinerary-v2.css";
 import {
-  ClockIcon,
-  SunIcon,
-  CloudRainIcon,
-  ArrowRightIcon,
-  SparklesIcon,
-  PlaneIcon,
-  HotelIcon,
-  MapPinIcon,
-} from "./Icons";
+  Compass,
+  Calendar,
+  Bed,
+  MapPin,
+  DollarSign,
+  Clock,
+  Sun,
+  CloudRain,
+  Plane,
+  Building2,
+  FileText,
+  Moon,
+  Landmark,
+  Luggage,
+  LogOut,
+  Star,
+  RotateCcw,
+} from "lucide-react";
 
 interface ItineraryViewProps {
   plan: FinalPlanResponse;
   onOpenReplanModal: () => void;
 }
 
-function format12h(time24?: string): string {
-  if (!time24 || !time24.includes(":")) return time24 ?? "";
-  const [hStr, mStr] = time24.split(":");
-  const h = parseInt(hStr, 10);
-  const m = parseInt(mStr, 10);
-  if (isNaN(h) || isNaN(m)) return time24;
-  const period = h >= 12 ? "PM" : "AM";
-  const h12 = h % 12 === 0 ? 12 : h % 12;
-  const padM = m < 10 ? `0${m}` : `${m}`;
-  return `${h12}:${padM} ${period}`;
-}
-
-function formatDuration(min: number): string {
-  if (!min || min <= 0) return "0m";
-  const hours = Math.floor(min / 60);
-  const remMin = min % 60;
-  if (hours > 0 && remMin > 0) return `${hours}h ${remMin}m`;
-  if (hours > 0) return `${hours}h`;
-  return `${remMin}m`;
-}
+type ItineraryTab = "overview" | "day-by-day" | "stays" | "map" | "budget";
 
 export function ItineraryView({ plan, onOpenReplanModal }: ItineraryViewProps) {
+  // Check if we have Itinerary V2
+  const itineraryV2 = plan.itineraryV2;
+
+  // URL-synced tab state
+  const [activeTab, setActiveTab] = useState<ItineraryTab>(() => {
+    const hash = window.location.hash.replace("#", "") as ItineraryTab;
+    if (["overview", "day-by-day", "stays", "map", "budget"].includes(hash)) {
+      return hash;
+    }
+    const params = new URLSearchParams(window.location.search);
+    const tabParam = params.get("tab") as ItineraryTab;
+    if (["overview", "day-by-day", "stays", "map", "budget"].includes(tabParam)) {
+      return tabParam;
+    }
+    return "overview";
+  });
+
+  const handleTabChange = (tab: ItineraryTab) => {
+    setActiveTab(tab);
+    const url = new URL(window.location.href);
+    url.hash = tab;
+    window.history.replaceState(null, "", url.toString());
+  };
+
+  useEffect(() => {
+    const handleHashChange = () => {
+      const hash = window.location.hash.replace("#", "") as ItineraryTab;
+      if (["overview", "day-by-day", "stays", "map", "budget"].includes(hash)) {
+        setActiveTab(hash);
+      }
+    };
+    window.addEventListener("hashchange", handleHashChange);
+    return () => window.removeEventListener("hashchange", handleHashChange);
+  }, []);
+
+  // -------------------------------------------------------------
+  // If we have Itinerary V2, render the new rich editorial view
+  // -------------------------------------------------------------
+  if (itineraryV2) {
+    return (
+      <div className="itinerary-v2-container">
+        {/* Editorial Header Band */}
+        <ItineraryHeader
+          itinerary={itineraryV2}
+          onOpenReplanModal={onOpenReplanModal}
+        />
+
+        {/* 5 Synchronized Tabs */}
+        <div className="itinerary-nav-tabs-bar">
+          <button
+            className={`nav-tab-btn ${activeTab === "overview" ? "active" : ""}`}
+            onClick={() => handleTabChange("overview")}
+          >
+            <Compass className="w-4 h-4 mr-2" /> Overview
+          </button>
+
+          <button
+            className={`nav-tab-btn ${activeTab === "day-by-day" ? "active" : ""}`}
+            onClick={() => handleTabChange("day-by-day")}
+          >
+            <Calendar className="w-4 h-4 mr-2" /> Day by Day ({itineraryV2.days.length})
+          </button>
+
+          <button
+            className={`nav-tab-btn ${activeTab === "stays" ? "active" : ""}`}
+            onClick={() => handleTabChange("stays")}
+          >
+            <Bed className="w-4 h-4 mr-2" /> Stays ({itineraryV2.stays.length})
+          </button>
+
+          <button
+            className={`nav-tab-btn ${activeTab === "map" ? "active" : ""}`}
+            onClick={() => handleTabChange("map")}
+          >
+            <MapPin className="w-4 h-4 mr-2" /> Map & Route
+          </button>
+
+          <button
+            className={`nav-tab-btn ${activeTab === "budget" ? "active" : ""}`}
+            onClick={() => handleTabChange("budget")}
+          >
+            <DollarSign className="w-4 h-4 mr-2" /> Budget
+          </button>
+        </div>
+
+        {/* Tab Contents */}
+        <div className="itinerary-tab-panels">
+          {activeTab === "overview" && (
+            <div className="tab-pane overview-pane">
+              <JourneyStrip itinerary={itineraryV2} />
+              <div className="overview-day-preview-section">
+                <div className="section-head">
+                  <h3 className="section-title">Schedule Highlights</h3>
+                  <button
+                    className="btn-text-action"
+                    onClick={() => handleTabChange("day-by-day")}
+                  >
+                    View detailed day-by-day plan →
+                  </button>
+                </div>
+                <DayByDayTimeline
+                  days={itineraryV2.days.slice(0, 3)}
+                  stays={itineraryV2.stays}
+                  currency={itineraryV2.currency}
+                />
+              </div>
+            </div>
+          )}
+
+          {activeTab === "day-by-day" && (
+            <div className="tab-pane day-by-day-pane">
+              <DayByDayTimeline
+                days={itineraryV2.days}
+                stays={itineraryV2.stays}
+                currency={itineraryV2.currency}
+              />
+            </div>
+          )}
+
+          {activeTab === "stays" && (
+            <div className="tab-pane stays-pane">
+              <StaysTimeline
+                stays={itineraryV2.stays}
+                transitions={itineraryV2.transitions}
+                currency={itineraryV2.currency}
+              />
+            </div>
+          )}
+
+          {activeTab === "map" && (
+            <div className="tab-pane map-pane">
+              <RouteMap itinerary={itineraryV2} />
+            </div>
+          )}
+
+          {activeTab === "budget" && (
+            <div className="tab-pane budget-pane">
+              <BudgetView budget={plan.budgetBreakdown} />
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // -------------------------------------------------------------
+  // Backward compatibility fallback for V1 itinerary
+  // -------------------------------------------------------------
   const days = plan.itinerary ?? [];
   const [selectedDayIdx, setSelectedDayIdx] = useState(0);
-
   const currentDay = days[selectedDayIdx];
   const weather = plan.weatherForecast;
-  const currentDayWeather = weather?.daily?.find((d) => d.date === currentDay?.date);
+  const currentDayWeather =
+    weather?.daily?.find((d) => d.date === currentDay?.date) ??
+    weather?.daily?.[selectedDayIdx] ??
+    weather?.daily?.[0];
 
   const flight = plan.flightOptions?.[0];
   const defaultHotel = plan.hotelOptions?.[0];
 
-  // Resolve active accommodation for the selected day
-  const dayAccom = currentDay?.accommodation ?? (defaultHotel ? {
-    hotelId: defaultHotel.id,
-    name: defaultHotel.name,
-    address: defaultHotel.address,
-    rating: defaultHotel.rating,
-    pricePerNight: defaultHotel.pricePerNight,
-    status: selectedDayIdx === 0 ? ("check_in" as const) : selectedDayIdx + 1 === days.length ? ("check_out" as const) : ("staying" as const),
-    notes: selectedDayIdx === 0 ? `Check-in from 15:00 at ${defaultHotel.name}` : selectedDayIdx + 1 === days.length ? `Check-out by 11:00 AM from ${defaultHotel.name}` : `Night stay at ${defaultHotel.name}`,
-  } : undefined);
+  const dayAccom = currentDay?.accommodation
+    ? {
+        name: currentDay.accommodation.name,
+        address: currentDay.accommodation.address,
+        pricePerNight: currentDay.accommodation.pricePerNight,
+        status: currentDay.accommodation.status,
+        rating: currentDay.accommodation.rating,
+        notes: currentDay.accommodation.notes,
+      }
+    : defaultHotel
+    ? {
+        name: defaultHotel.name,
+        address: defaultHotel.address,
+        pricePerNight: defaultHotel.pricePerNight,
+        status: selectedDayIdx === 0 ? "check_in" : selectedDayIdx === days.length - 1 ? "check_out" : "staying",
+        rating: defaultHotel.rating,
+        notes: defaultHotel.hotelStyle ? `${defaultHotel.hotelStyle} base accommodation` : undefined,
+      }
+    : null;
 
   return (
     <div className="itinerary-view">
-      {/* Top Summary Banner: Flight & Accommodation Overview */}
-      <div className="trip-overview-cards">
+      <div className="itinerary-top-bar">
         {flight && (
-          <div className="overview-card">
-            <div className="card-icon flight-icon">
-              <PlaneIcon className="w-5 h-5" />
+          <div className="top-flight-card">
+            <div className="top-flight-icon-box">
+              <Plane className="w-5 h-5 text-sky-600" />
             </div>
-            <div className="card-details">
-              <span className="card-label">Recommended Flights</span>
-              <strong className="card-title">
-                {flight.carrierName} ({flight.carrier})
-              </strong>
-              <span className="card-sub">
-                {flight.origin} → {flight.destination} •{" "}
-                {flight.totalDurationMinutes
-                  ? `${Math.round(flight.totalDurationMinutes / 60)}h ${flight.totalDurationMinutes % 60}m`
-                  : "Direct"}{" "}
-                ({flight.stops === 0 ? "Non-stop" : `${flight.stops} stop`})
-              </span>
+            <div className="top-flight-details">
+              <span className="card-sub-label">Recommended Flights</span>
+              <strong className="top-flight-carrier">{flight.carrierName} ({flight.carrier})</strong>
+              <div className="top-flight-route">
+                <span>{flight.origin} → {flight.destination}</span>
+                <span className="dot-sep">•</span>
+                <span>{Math.floor(flight.totalDurationMinutes / 60)}h {flight.totalDurationMinutes % 60}m</span>
+                <span className="dot-sep">•</span>
+                <span className="badge-stops">{flight.stops === 0 ? "Non-stop" : `${flight.stops} stop`}</span>
+              </div>
             </div>
-            <div className="card-price">
+            <div className="top-flight-price">
               {(flight.price.amount / 100).toLocaleString(undefined, {
                 style: "currency",
                 currency: flight.price.currency,
@@ -91,77 +244,68 @@ export function ItineraryView({ plan, onOpenReplanModal }: ItineraryViewProps) {
         )}
 
         {defaultHotel && (
-          <div className="overview-card">
-            <div className="card-icon hotel-icon">
-              <HotelIcon className="w-5 h-5" />
+          <div className="top-hotel-card">
+            <div className="top-hotel-icon-box">
+              <Building2 className="w-5 h-5 text-terracotta" />
             </div>
-            <div className="card-details">
-              <span className="card-label">Primary Lodging Base</span>
-              <strong className="card-title">{defaultHotel.name}</strong>
-              <span className="card-sub">
-                ⭐ {defaultHotel.rating ?? 4.5} • {defaultHotel.address}
+            <div className="top-hotel-details">
+              <span className="card-sub-label">Primary Lodging Base</span>
+              <strong className="top-hotel-name">{defaultHotel.name}</strong>
+              <div className="top-hotel-meta">
+                {defaultHotel.rating && (
+                  <span className="rating-pill">
+                    <Star className="w-3 h-3 inline text-amber fill-amber mr-1" />
+                    {defaultHotel.rating}
+                  </span>
+                )}
+                <span className="hotel-addr-text">{defaultHotel.address}</span>
+              </div>
+            </div>
+            <div className="top-hotel-price">
+              <span className="val">
+                {(defaultHotel.pricePerNight.amount / 100).toLocaleString(undefined, {
+                  style: "currency",
+                  currency: defaultHotel.pricePerNight.currency,
+                })}
               </span>
-            </div>
-            <div className="card-price">
-              {(defaultHotel.pricePerNight.amount / 100).toLocaleString(undefined, {
-                style: "currency",
-                currency: defaultHotel.pricePerNight.currency,
-              })}
-              <span className="per-night">/night</span>
+              <span className="unit">/night</span>
             </div>
           </div>
         )}
       </div>
 
-      {/* Plan Summary / Disruption Notes */}
-      {plan.summary && (
-        <div className="replan-banner">
-          <SparklesIcon className="w-5 h-5 text-amber" />
-          <div className="replan-info">
-            <strong>Plan Overview:</strong> {plan.summary}
-          </div>
+      <div className="day-selector-strip">
+        <div className="day-tabs-wrapper">
+          {days.map((d, idx) => (
+            <button
+              key={d.dayNumber}
+              className={`day-selector-tab ${selectedDayIdx === idx ? "active" : ""}`}
+              onClick={() => setSelectedDayIdx(idx)}
+            >
+              <div className="tab-day-number">Day {d.dayNumber}</div>
+              <div className="tab-date">{d.date}</div>
+            </button>
+          ))}
         </div>
-      )}
-
-      {/* Day Selector Tabs */}
-      <div className="day-tabs-container">
-        <div className="day-tabs">
-          {days.map((d, idx) => {
-            const isSwitch = d.accommodation?.status === "switch_hotel";
-            return (
-              <button
-                key={d.dayNumber}
-                className={`day-tab ${selectedDayIdx === idx ? "active" : ""}`}
-                onClick={() => setSelectedDayIdx(idx)}
-              >
-                <span className="tab-day-num">
-                  Day {d.dayNumber} {isSwitch ? "🧳" : ""}
-                </span>
-                <span className="tab-day-date">{d.date}</span>
-              </button>
-            );
-          })}
-        </div>
-
         <button className="btn btn-secondary btn-sm" onClick={onOpenReplanModal}>
-          <SparklesIcon className="w-4 h-4" /> Refine / Replan
+          <RotateCcw className="w-4 h-4 mr-1.5" /> Adjust itinerary
         </button>
       </div>
 
-      {currentDay ? (
+      {currentDay && (
         <div className="day-content">
-          {/* Day Weather & Transit Summary */}
           <div className="day-weather-bar">
             <div className="weather-forecast">
               {currentDayWeather?.isRainy ? (
-                <CloudRainIcon className="w-5 h-5 text-blue" />
+                <CloudRain className="w-5 h-5 text-teal" />
               ) : (
-                <SunIcon className="w-5 h-5 text-amber" />
+                <Sun className="w-5 h-5 text-amber" />
               )}
               <span className="weather-text">
-                <strong>{currentDayWeather?.condition ?? "Pleasant weather"}</strong> •{" "}
-                {currentDayWeather ? `${currentDayWeather.tempMinC}°C - ${currentDayWeather.tempMaxC}°C` : "18°C - 24°C"}
-                {currentDayWeather?.isRainy && " (Rain advisory active)"}
+                <strong>{currentDayWeather?.condition ?? "Pleasant weather"}</strong>
+                {currentDayWeather && (
+                  <> • {currentDayWeather.tempMinC}°C to {currentDayWeather.tempMaxC}°C</>
+                )}
               </span>
             </div>
             <div className="day-stats">
@@ -170,115 +314,71 @@ export function ItineraryView({ plan, onOpenReplanModal }: ItineraryViewProps) {
             </div>
           </div>
 
-          {/* Dynamic Daily Accommodation Card */}
-          {dayAccom && (
-            <div className={`day-hotel-banner status-${dayAccom.status}`}>
-              <div className="hotel-banner-left">
-                <div className={`hotel-banner-icon-box icon-${dayAccom.status}`}>
-                  <HotelIcon className="w-5 h-5" />
-                </div>
-                <div className="hotel-banner-info">
-                  <div className="hotel-banner-tag-row">
-                    <span className={`hotel-status-tag tag-${dayAccom.status}`}>
-                      {dayAccom.status === "check_in" && "🏨 Hotel Check-In"}
-                      {dayAccom.status === "switch_hotel" && "🧳 Hotel Transfer / Switch Stay"}
-                      {dayAccom.status === "check_out" && "🚪 Final Day Check-Out"}
-                      {dayAccom.status === "staying" && "🌙 Night Stay Base"}
-                    </span>
-                    {dayAccom.rating && (
-                      <span className="hotel-rating-pill">⭐ {dayAccom.rating}</span>
-                    )}
+          <div className="explained-day-card">
+            <div className="explained-day-header">
+              <h3 className="explained-day-title">
+                Day {currentDay.dayNumber} – Itinerary {currentDay.theme ? `(${currentDay.theme})` : ""}
+              </h3>
+            </div>
+            <div className="explained-day-body">
+              {currentDay.dayPlan && (
+                <div className="explained-day-row">
+                  <span className="explained-row-icon">
+                    <FileText className="w-4 h-4 text-terracotta" />
+                  </span>
+                  <div className="explained-row-content">
+                    <strong>Day plan:</strong> {currentDay.dayPlan}
                   </div>
-                  <h4 className="hotel-banner-title">{dayAccom.name}</h4>
-                  <p className="hotel-banner-address">
-                    <MapPinIcon className="w-3.5 h-3.5 hotel-pin-icon" /> {dayAccom.address}
-                  </p>
-                  {dayAccom.notes && (
-                    <p className="hotel-banner-notes">{dayAccom.notes}</p>
-                  )}
+                </div>
+              )}
+              <div className="explained-day-row">
+                <span className="explained-row-icon">
+                  <Moon className="w-4 h-4 text-indigo-600" />
+                </span>
+                <div className="explained-row-content">
+                  <strong>Night stay:</strong> {currentDay.nightStay || dayAccom?.name || "Local Base Stay"}
                 </div>
               </div>
-
-              {dayAccom.pricePerNight && (
-                <div className="hotel-banner-price">
-                  <span className="price-val">
-                    {(dayAccom.pricePerNight.amount / 100).toLocaleString(undefined, {
-                      style: "currency",
-                      currency: dayAccom.pricePerNight.currency,
-                    })}
+              {((currentDay.attractions && currentDay.attractions.length > 0) ||
+                currentDay.stops.filter((s) => s.type === "activity").length > 0) && (
+                <div className="explained-day-row">
+                  <span className="explained-row-icon">
+                    <Landmark className="w-4 h-4 text-teal" />
                   </span>
-                  <span className="price-unit">/ night</span>
+                  <div className="explained-row-content">
+                    <strong>Attractions:</strong>{" "}
+                    {currentDay.attractions && currentDay.attractions.length > 0
+                      ? currentDay.attractions.join(", ")
+                      : currentDay.stops
+                          .filter((s) => s.type === "activity")
+                          .map((s) => s.name)
+                          .join(", ")}
+                  </div>
                 </div>
               )}
             </div>
-          )}
+          </div>
 
-          {/* Activity Timeline */}
-          <div className="timeline-container">
-            {currentDay.stops.map((stop, idx) => {
-              const isLodging = stop.type === "lodging";
-              const isMeal = stop.type === "meal";
-
-              return (
-                <React.Fragment key={stop.id || idx}>
-                  {/* Transfer connector before this stop (if any) */}
-                  {stop.transferFromPrevMin > 0 && (
-                    <div className="transfer-connector">
-                      <div className="connector-line"></div>
-                      <div className="transfer-pill">
-                        <ArrowRightIcon className="w-3 h-3" />
-                        <span>
-                          Transfer • {stop.transferFromPrevMin} mins ({((stop.distanceFromPrevMeters || 1000) / 1000).toFixed(1)} km)
-                        </span>
-                      </div>
-                      <div className="connector-line"></div>
-                    </div>
-                  )}
-
-                  <div className={`activity-card ${isLodging ? "activity-card-lodging" : isMeal ? "activity-card-meal" : ""}`}>
-                    <div className="activity-time-col">
-                      <div className="activity-time-window">
-                        <span className="time-start">{format12h(stop.startLocal)}</span>
-                        <span className="time-sep">to</span>
-                        <span className="time-end">{format12h(stop.endLocal || stop.startLocal)}</span>
-                      </div>
-                      <span className="activity-duration">
-                        <ClockIcon className="w-3 h-3" /> {formatDuration(stop.durationMin)}
-                      </span>
-                    </div>
-
-                    <div className="activity-body">
-                      <div className="activity-top-row">
-                        <div className="activity-title-group">
-                          {isLodging && <HotelIcon className="w-4 h-4 text-purple inline-icon" />}
-                          <h4 className="activity-title">{stop.name}</h4>
-                        </div>
-                        <span className={`activity-badge badge-${stop.type || "activity"}`}>
-                          {isLodging ? "HOTEL / LODGING" : isMeal ? "DINING BREAK" : stop.type ? stop.type.toUpperCase() : "ACTIVITY"}
-                        </span>
-                      </div>
-
-                      {stop.notes && <p className="activity-desc">{stop.notes}</p>}
-
-                      <div className="activity-footer">
-                        <span className={`activity-cost ${isLodging ? "cost-lodging" : ""}`}>
-                          {isLodging
-                            ? "Stay & Luggage handling included"
-                            : isMeal
-                            ? "Estimated dining budget included"
-                            : "Scheduled visit & admission"}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </React.Fragment>
-              );
-            })}
+          <div className="stops-timeline">
+            {currentDay.stops.map((stop) => (
+              <div key={stop.id} className="timeline-stop-item">
+                <div className="stop-time">
+                  <span className="time-val">{stop.startLocal}</span>
+                  <span className="time-duration">
+                    <Clock className="w-3 h-3 inline mr-1" />
+                    {stop.durationMin}m
+                  </span>
+                </div>
+                <div className="stop-card">
+                  <h4 className="stop-name">{stop.name}</h4>
+                  <p className="stop-desc">{stop.notes || "Scheduled activity visit"}</p>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
-      ) : (
-        <div className="empty-day">No activities planned for this day.</div>
       )}
     </div>
   );
 }
+export default ItineraryView;

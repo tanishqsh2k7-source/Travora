@@ -41,14 +41,12 @@ export function sumMoney(items: Money[], currency?: string): Money {
   if (items.length === 0) {
     return { amount: 0, currency: currency ?? "USD" };
   }
-  const targetCurrency = currency ?? items[0].currency;
+  const targetCurrency = (currency ?? items[0].currency).toUpperCase();
   let total = new Decimal(0);
 
   for (const item of items) {
-    if (item.currency !== targetCurrency) {
-      throw new Error(`Currency mismatch in sum: expected ${targetCurrency}, got ${item.currency}`);
-    }
-    total = total.plus(toDecimal(item.amount));
+    const converted = toTargetCurrency(item, targetCurrency);
+    total = total.plus(toDecimal(converted.amount));
   }
 
   return createMoney(total, targetCurrency);

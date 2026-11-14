@@ -130,7 +130,7 @@ describe("Phase 5: Supervisor and Parallel Agents", () => {
       // Verify destination places research ran and found Lisbon sights
       expect(finalState.placesResult?.length).toBeGreaterThan(0);
       const hasLisbonPlace = finalState.placesResult?.some(
-        (p) => p.name.includes("Gulbenkian") || p.name.includes("Jerónimos") || p.address.includes("Lisboa")
+        (p: { name: string; address: string }) => p.name.includes("Gulbenkian") || p.name.includes("Jerónimos") || p.address.includes("Lisboa")
       );
       expect(hasLisbonPlace).toBe(true);
 
@@ -250,7 +250,7 @@ describe("Phase 5: Supervisor and Parallel Agents", () => {
 
       // Warning should be recorded in state and final response
       const hasFlightWarning = finalState.warnings?.some(
-        (w) => w.includes("Flight") || w.includes("unavailable")
+        (w: string) => w.includes("Flight") || w.includes("unavailable")
       );
       expect(hasFlightWarning).toBe(true);
 

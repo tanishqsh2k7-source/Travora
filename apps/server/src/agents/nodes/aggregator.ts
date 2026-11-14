@@ -26,6 +26,7 @@ export async function aggregatorNode(state: TravelState): Promise<TravelStateUpd
   );
 
   const finalResponse: FinalPlanResponse = {
+    version: 2,
     tripId: state.tripId,
     runId: state.runId,
     destination: req.destination,
@@ -36,6 +37,7 @@ export async function aggregatorNode(state: TravelState): Promise<TravelStateUpd
     },
     summary: `Curated ${totalDays}-day travel plan for ${req.destination} covering top sights, optimized transit routes, and verified budgets.`,
     itinerary: state.routeResult?.days ?? [],
+    itineraryV2: state.itineraryV2Result,
     budgetBreakdown: state.budgetResult!,
     flightOptions: state.flightsResult ?? [],
     hotelOptions: state.hotelsResult ?? [],

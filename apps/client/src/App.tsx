@@ -32,6 +32,7 @@ import {
   MapPinIcon,
   RefreshIcon,
 } from "./components/Icons";
+import { SAMPLE_MULTICITY_ITINERARY } from "./fixtures/sample-multicity";
 import "./styles/app.css";
 
 type AppView = "builder" | "planning" | "view";
@@ -56,11 +57,79 @@ export function App() {
   const [isPreferencesModalOpen, setIsPreferencesModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Initialize auth
+  // Initialize auth and check for /sample route
   useEffect(() => {
     ensureAuth().catch((err) => {
       console.warn("Auth initialization note:", err);
     });
+
+    const isSample =
+      window.location.pathname === "/sample" ||
+      window.location.search.includes("sample=true");
+
+    if (isSample) {
+      const itin = SAMPLE_MULTICITY_ITINERARY;
+      const mockPlan: FinalPlanResponse = {
+        version: 2,
+        tripId: itin.id,
+        runId: "sample_run",
+        destination: itin.summary.cities.join(" & "),
+        dates: {
+          startDate: itin.startDate,
+          endDate: itin.endDate,
+          totalDays: itin.days.length,
+        },
+        summary: itin.summary.title,
+        itinerary: [],
+        itineraryV2: itin,
+        budgetBreakdown: {
+          userBudget: itin.summary.budget,
+          totalEstimated: itin.summary.estimatedTotal,
+          remainingBudget: itin.summary.remaining,
+          withinBudget: itin.summary.withinBudget,
+          flexibilityPct: 10,
+          contingencyPct: 10,
+          alternatives: [],
+          categories: {
+            flights: itin.journey[0]?.cost ?? { amount: 8000000, currency: itin.currency },
+            accommodation: itin.stays[0]?.hotel.total ?? { amount: 12000000, currency: itin.currency },
+            food: { amount: 3000000, currency: itin.currency },
+            local_transport: { amount: 1500000, currency: itin.currency },
+            activities: { amount: 1500000, currency: itin.currency },
+            contingency: { amount: 2000000, currency: itin.currency },
+          },
+          breakdown: [],
+          warnings: itin.summary.warnings,
+        },
+        flightOptions: [],
+        hotelOptions: [],
+        sources: itin.sources,
+        warnings: itin.summary.warnings,
+      };
+
+      const mockTrip: TripResponse = {
+        id: itin.id,
+        userId: "sample_user",
+        origin: itin.journey[0]?.from.city || "Delhi",
+        destination: itin.summary.cities.join(" & "),
+        startDate: itin.startDate,
+        endDate: itin.endDate,
+        timezone: "Asia/Tokyo",
+        travellers: itin.travellers,
+        budget: itin.summary.budget,
+        interests: ["Culture", "Temples", "Food", "Heritage"],
+        travelStyle: "balanced",
+        transportPreferences: ["train", "flight"],
+        status: "planned",
+        currentVersionNo: 1,
+        createdAt: itin.generatedAt,
+        updatedAt: itin.generatedAt,
+      };
+
+      setActiveTrip(mockTrip);
+      setPlanResult(mockPlan);
+      setCurrentView("view");
+    }
   }, []);
 
   const handleStartTripPlanning = async (tripRequest: CreateTripRequest) => {
@@ -247,20 +316,24 @@ export function App() {
                   className={`plan-tab-btn ${activeTab === "itinerary" ? "active" : ""}`}
                   onClick={() => setActiveTab("itinerary")}
                 >
-                  <CalendarIcon className="w-4 h-4" /> Day-by-Day Itinerary
+                  <CalendarIcon className="w-4 h-4" /> {planResult.itineraryV2 ? "Itinerary Journey" : "Day-by-Day Itinerary"}
                 </button>
-                <button
-                  className={`plan-tab-btn ${activeTab === "budget" ? "active" : ""}`}
-                  onClick={() => setActiveTab("budget")}
-                >
-                  <CurrencyIcon className="w-4 h-4" /> Budget Breakdown
-                </button>
-                <button
-                  className={`plan-tab-btn ${activeTab === "map" ? "active" : ""}`}
-                  onClick={() => setActiveTab("map")}
-                >
-                  <MapPinIcon className="w-4 h-4" /> Route & Stops
-                </button>
+                {!planResult.itineraryV2 && (
+                  <>
+                    <button
+                      className={`plan-tab-btn ${activeTab === "budget" ? "active" : ""}`}
+                      onClick={() => setActiveTab("budget")}
+                    >
+                      <CurrencyIcon className="w-4 h-4" /> Budget Breakdown
+                    </button>
+                    <button
+                      className={`plan-tab-btn ${activeTab === "map" ? "active" : ""}`}
+                      onClick={() => setActiveTab("map")}
+                    >
+                      <MapPinIcon className="w-4 h-4" /> Route & Stops
+                    </button>
+                  </>
+                )}
                 <button
                   className={`plan-tab-btn ${activeTab === "versions" ? "active" : ""}`}
                   onClick={() => setActiveTab("versions")}

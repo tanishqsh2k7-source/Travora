@@ -158,8 +158,9 @@ export function calculateBudget(input: BudgetEngineInput): BudgetBreakdown {
     // Evaluate flight alternatives
     if (input.flightAlternatives) {
       for (const alt of input.flightAlternatives) {
-        if (toDecimal(alt.price.amount).lessThan(toDecimal(flightsTotal.amount))) {
-          const savings = subtractMoney(flightsTotal, alt.price);
+        const altPrice = toTargetCurrency(alt.price, currency);
+        if (toDecimal(altPrice.amount).lessThan(toDecimal(flightsTotal.amount))) {
+          const savings = subtractMoney(flightsTotal, altPrice);
           alternatives.push({
             description: alt.description,
             potentialSavings: savings,
@@ -172,8 +173,9 @@ export function calculateBudget(input: BudgetEngineInput): BudgetBreakdown {
     // Evaluate hotel alternatives
     if (input.hotelAlternatives) {
       for (const alt of input.hotelAlternatives) {
-        if (toDecimal(alt.price.amount).lessThan(toDecimal(accommodationTotal.amount))) {
-          const savings = subtractMoney(accommodationTotal, alt.price);
+        const altPrice = toTargetCurrency(alt.price, currency);
+        if (toDecimal(altPrice.amount).lessThan(toDecimal(accommodationTotal.amount))) {
+          const savings = subtractMoney(accommodationTotal, altPrice);
           alternatives.push({
             description: alt.description,
             potentialSavings: savings,

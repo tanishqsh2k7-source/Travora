@@ -36,6 +36,12 @@ export function createApp() {
     });
   });
 
+  // ── Sample multi-city demo routes (no API keys required) ─
+  app.get(["/sample", "/api/v1/sample"], async (_req, res) => {
+    const { SAMPLE_MULTICITY_ITINERARY } = await import("./fixtures/sample-multicity.js");
+    res.json(SAMPLE_MULTICITY_ITINERARY);
+  });
+
   // ── API v1 routes ──────────────────────────────────────
   app.use("/api/v1/auth", authRouter);
   app.use("/api/v1/trips", tripsRouter);

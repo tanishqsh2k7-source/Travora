@@ -1,5 +1,11 @@
 import type { TravelState, TravelStateUpdate } from "../state.js";
-import { optimizeRoutes, calculateBudget, validateSchedule, toTargetCurrency } from "../../engines/index.js";
+import {
+  optimizeRoutes,
+  calculateBudget,
+  validateSchedule,
+  toTargetCurrency,
+  synthesizeItinerary,
+} from "../../engines/index.js";
 import { eventService } from "../../services/event-service.js";
 
 export async function itineraryNode(state: TravelState): Promise<TravelStateUpdate> {
@@ -30,7 +36,18 @@ export async function itineraryNode(state: TravelState): Promise<TravelStateUpda
 
   const daysCount = travelDates.length;
 
-  // 2. Optimize Routes
+  // 2. Synthesize rich Itinerary V2 (Stays, Transitions, Journey Legs, Days)
+  const itineraryV2 = synthesizeItinerary({
+    tripId: state.tripId || "trip_default",
+    request: req,
+    placesResult: places,
+    flightsResult: state.flightsResult ?? [],
+    hotelsResult: state.hotelsResult ?? [],
+    weatherResult: state.weatherResult,
+    dataMode: process.env.PROVIDER_MODE === "live" ? "live" : "demo",
+  });
+
+  // 3. Optimize Routes (for backwards compatibility with v1)
   const routeResult = optimizeRoutes({
     places,
     daysCount,
@@ -40,7 +57,7 @@ export async function itineraryNode(state: TravelState): Promise<TravelStateUpda
     hotels: state.hotelsResult ?? [],
   });
 
-  // 3. Compute Budget
+  // 4. Compute Budget
   const isINR = req.budget.currency.toUpperCase() === "INR";
   const multiplier = isINR ? 85 : 1;
 
@@ -91,7 +108,7 @@ export async function itineraryNode(state: TravelState): Promise<TravelStateUpda
     hotelAlternatives,
   });
 
-  // 4. Validate Schedule
+  // 5. Validate Schedule
   const validationReport = validateSchedule({
     days: routeResult.days,
     budgetBreakdown: budgetResult,
@@ -100,6 +117,7 @@ export async function itineraryNode(state: TravelState): Promise<TravelStateUpda
 
   return {
     routeResult,
+    itineraryV2Result: itineraryV2,
     budgetResult,
     validationReport,
   };

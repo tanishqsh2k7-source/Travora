@@ -14,6 +14,7 @@ import type {
   TaskPlan,
   ReplanRequest,
   ReplanPatch,
+  Itinerary,
 } from "@travora/contracts";
 
 export const TravelStateAnnotation = Annotation.Root({
@@ -66,6 +67,10 @@ export const TravelStateAnnotation = Annotation.Root({
     default: () => undefined,
   }),
   routeResult: Annotation<RouteOptimizerResult | undefined>({
+    reducer: (_, next) => next,
+    default: () => undefined,
+  }),
+  itineraryV2Result: Annotation<Itinerary | undefined>({
     reducer: (_, next) => next,
     default: () => undefined,
   }),

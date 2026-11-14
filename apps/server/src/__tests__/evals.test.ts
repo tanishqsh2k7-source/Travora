@@ -234,7 +234,7 @@ describe("Phase 9: Comprehensive Hardening & Evaluation Suite (Evals)", () => {
       // Final itinerary must have scheduled days with valid stops
       expect(finalState.finalResponse!.itinerary.length).toBe(3);
       const totalStops = finalState.finalResponse!.itinerary.reduce(
-        (acc, d) => acc + d.stops.length,
+        (acc: number, d: { stops: unknown[] }) => acc + d.stops.length,
         0
       );
       expect(totalStops).toBeGreaterThanOrEqual(3);

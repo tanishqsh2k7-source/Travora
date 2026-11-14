@@ -16,15 +16,17 @@ Travora is completely implemented and integrated with live external providers as
 | Component / Engine | Status | Integration Details |
 |---|:---:|---|
 | **Multi-Agent Orchestrator** | 🟢 Active | LangGraph.js StateGraph supervisor with parallel specialist fan-out |
-| **Attractions & Places** | 🟢 Live | Google Places API (New) FieldMask text search & details |
+| **Itinerary V2 Synthesis Engine** | 🟢 Active | Multi-city journey arcs, continuous stay segmentation & transition engine |
+| **Interactive Route Mapping** | 🟢 Active | Leaflet & OpenStreetMap tile integration with dashed flight/solid rail arcs |
+| **Attractions & Places** | 🟢 Live | Google Places API (New) FieldMask text search & details (with offline fixtures) |
 | **Routing & Distance Matrix** | 🟢 Live | Google Routes API directions & duration matrix |
-| **Weather & Disruption** | 🟢 Live | OpenWeather 5-day / 3-hour forecasts with rain coherence |
+| **Weather & Disruption** | 🟢 Live | Regional & coordinate-aware OpenWeather forecasts with rain coherence |
 | **Flight Offers & Pricing** | 🟢 Live | Duffel Flights API with IATA normalization & cabin class search |
 | **Hotel Inventory & Stays** | 🟢 Live | LiteAPI Global Hotels API (with Booking.com RapidAPI fallback) |
 | **LLM Reasoning** | 🟢 Live | Google Gemini 2.5 Flash via `@langchain/google-genai` |
 | **Deterministic Math** | 🟢 Verified | Pure-function `Decimal.js` budget & Nearest-Neighbor TSP route engine |
 | **Database Storage** | 🟢 Connected | MongoDB Atlas cloud cluster with Mongoose ODM |
-| **Test Suite** | 🟢 106/106 Passing | 100% offline unit, integration, and security eval tests |
+| **Test Suite** | 🟢 Passing | 100% offline unit, integration, and security eval tests across workspaces |
 
 ---
 
@@ -102,15 +104,17 @@ travora/
 │   │       │   ├── fixtures/ # Canned offline fallback datasets (places, weather, flights, hotels)
 │   │       │   └── live/     # Google Places, Google Routes, OpenWeather, Duffel, LiteAPI
 │   │       ├── routes/     # Auth, trips, planning, versions, preferences
-│   │       ├── services/   # Real-time SSE event broker (RunEventService)
+│   │       ├── services/   # Real-time SSE event broker (RunEventService), prompt parser
+│   │       ├── fixtures/   # Sample itineraries (e.g. multi-city Golden Route)
 │   │       ├── models/     # Mongoose schemas (User, Trip, TripVersion, Run)
 │   │       ├── demo.ts     # Standalone end-to-end interactive CLI demo
-│   │       └── __tests__/  # Vitest integration suites & evals (106 tests)
+│   │       └── __tests__/  # Vitest integration suites & evals
 │   └── client/             # React 19 + Vite frontend
 │       └── src/
 │           ├── api/        # Type-safe API client & EventSource subscriber
-│           ├── components/ # TripBuilder, PlanningProgress, Itinerary, Budget, Map
-│           └── styles/     # Modern dark-mode styling
+│           ├── components/ # Editorial Navbar, TripBuilder, PlanningProgress, ItineraryView
+│           │   └── results/# JourneyStrip, StaysTimeline, DayByDayTimeline, RouteMap, Header
+│           └── styles/     # Warm Editorial Design System tokens & responsive styling
 ├── .env.example            # Canonical environment variable specification
 ├── AGENTS.md               # Architecture and agent coding rules
 └── package.json            # Workspace root scripts
@@ -175,6 +179,13 @@ npm run dev:client
 > Boots Vite dev server on **`http://localhost:5173`**.
 
 Open **`http://localhost:5173`** in your browser to plan trips, view real-time SSE progress, explore itineraries, inspect budget breakdowns, and trigger adaptive replanning.
+
+#### Instant Sample Preview (No API Keys / No Waiting)
+You can view the full 9-night Tokyo & Kyoto multi-city itinerary experience immediately by visiting:
+```
+http://localhost:5173/sample
+```
+or appending `?sample=true` to the URL. This directly loads the complete Journey Arc, Stay Segments, Hotel Change transitions, and Leaflet OpenStreetMap view without making live API calls.
 
 ---
 
