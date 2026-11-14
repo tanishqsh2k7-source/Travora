@@ -93,6 +93,7 @@ travora/
 ├── docker-compose.yml      # Local MongoDB service definition
 ├── .env.example            # Canonical environment variable specification
 ├── AGENTS.md               # Architecture and agent coding rules
+├── TECH_STACK.md           # Complete technology stack and library matrix
 └── package.json            # Workspace root scripts
 ```
 
