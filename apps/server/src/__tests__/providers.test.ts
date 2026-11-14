@@ -8,6 +8,9 @@ import {
   GooglePlacesLiveAdapter,
   GoogleRoutesLiveAdapter,
   OpenWeatherLiveAdapter,
+  DuffelFlightsLiveAdapter,
+  LiteApiLiveAdapter,
+  BookingComLiveAdapter,
   getProviderRegistry,
   ProviderError,
 } from "../providers/index.js";
@@ -383,6 +386,154 @@ describe("Phase 2: Provider Layer", () => {
         expect(forecast.daily[1].isRainy).toBe(true);
         expect(forecast.daily[1].precipitationProb).toBe(85);
         expect(forecast.alerts.length).toBeGreaterThan(0);
+      });
+    });
+
+    describe("DuffelFlightsLiveAdapter", () => {
+      it("throws ProviderError if API key is missing", async () => {
+        const live = new DuffelFlightsLiveAdapter("");
+        await expect(
+          live.searchFlights({
+            origin: "DEL",
+            destination: "NRT",
+            departureDate: "2027-04-10",
+            adults: 1,
+            currency: "USD",
+          })
+        ).rejects.toThrow(ProviderError);
+      });
+
+      it("normalizes live Duffel offers into FlightOffer objects", async () => {
+        const live = new DuffelFlightsLiveAdapter("fake-duffel-token");
+
+        const fakeDuffelRes = {
+          data: {
+            id: "orq_123",
+            offers: [
+              {
+                id: "off_456",
+                owner: { iata_code: "JL", name: "Japan Airlines" },
+                total_amount: "640.50",
+                total_currency: "USD",
+                slices: [
+                  {
+                    duration: "PT8H30M",
+                    origin: { iata_code: "DEL" },
+                    destination: { iata_code: "NRT" },
+                    segments: [
+                      {
+                        id: "seg_1",
+                        origin: { iata_code: "DEL" },
+                        destination: { iata_code: "NRT" },
+                        departing_at: "2027-04-10T19:05:00Z",
+                        arriving_at: "2027-04-11T06:35:00Z",
+                        marketing_carrier: { iata_code: "JL", name: "Japan Airlines" },
+                        marketing_carrier_flight_number: "JL750",
+                        duration: "PT8H30M",
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        };
+
+        vi.spyOn(global, "fetch").mockResolvedValueOnce({
+          ok: true,
+          status: 200,
+          json: async () => fakeDuffelRes,
+        } as unknown as Response);
+
+        const offers = await live.searchFlights({
+          origin: "DEL",
+          destination: "NRT",
+          departureDate: "2027-04-10",
+          adults: 1,
+          currency: "USD",
+        });
+
+        expect(offers.length).toBe(1);
+        expect(offers[0].carrier).toBe("JL");
+        expect(offers[0].carrierName).toBe("Japan Airlines");
+        expect(offers[0].price.amount).toBe(64050); // Cents
+        expect(offers[0].price.currency).toBe("USD");
+        expect(offers[0].segments[0].flightNumber).toBe("JL750");
+        expect(offers[0].provider).toBe("duffel_flights");
+      });
+    });
+
+    describe("LiteApiLiveAdapter", () => {
+      it("throws ProviderError if API key is missing", async () => {
+        const live = new LiteApiLiveAdapter("");
+        await expect(
+          live.searchHotels({
+            destination: "Tokyo",
+            checkInDate: "2027-04-10",
+            checkOutDate: "2027-04-12",
+            adults: 2,
+            rooms: 1,
+            currency: "USD",
+          })
+        ).rejects.toThrow(ProviderError);
+      });
+
+      it("fetches and normalizes LiteAPI hotel offers", async () => {
+        const live = new LiteApiLiveAdapter("fake-liteapi-key");
+
+        const fakeLiteRes = {
+          data: [
+            {
+              id: "htl_lite_001",
+              name: "Hotel Century Southern Tower",
+              hotelDescription: "High-rise modern hotel near Shinjuku station",
+              address: "2-2-1 Yoyogi, Shibuya City, Tokyo",
+              latitude: 35.6865,
+              longitude: 139.7005,
+              rating: 4.6,
+              starRating: 4,
+              amenities: ["Free WiFi", "Gym", "Restaurant"],
+            },
+          ],
+        };
+
+        vi.spyOn(global, "fetch").mockResolvedValueOnce({
+          ok: true,
+          status: 200,
+          json: async () => fakeLiteRes,
+        } as unknown as Response);
+
+        const hotels = await live.searchHotels({
+          destination: "Tokyo",
+          checkInDate: "2027-04-10",
+          checkOutDate: "2027-04-12",
+          adults: 2,
+          rooms: 1,
+          currency: "USD",
+        });
+
+        expect(hotels.length).toBe(1);
+        expect(hotels[0].name).toBe("Hotel Century Southern Tower");
+        expect(hotels[0].nights).toBe(2);
+        expect(hotels[0].pricePerNight.amount).toBeGreaterThan(0);
+        expect(hotels[0].totalPrice.amount).toBe(hotels[0].pricePerNight.amount * 2);
+        expect(hotels[0].provider).toBe("lite_api");
+      });
+    });
+
+    describe("BookingComLiveAdapter", () => {
+      it("throws ProviderError if API key is missing", async () => {
+        const live = new BookingComLiveAdapter("");
+        await expect(
+          live.searchHotels({
+            destination: "Tokyo",
+            checkInDate: "2027-04-10",
+            checkOutDate: "2027-04-12",
+            adults: 2,
+            rooms: 1,
+            currency: "USD",
+          })
+        ).rejects.toThrow(ProviderError);
       });
     });
   });

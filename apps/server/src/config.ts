@@ -19,6 +19,9 @@ const env = {
   PROVIDER_MODE: process.env.PROVIDER_MODE ?? "fixture",
   GOOGLE_MAPS_API_KEY: process.env.GOOGLE_MAPS_API_KEY,
   OPENWEATHER_API_KEY: process.env.OPENWEATHER_API_KEY,
+  DUFFEL_API_KEY: process.env.DUFFEL_API_KEY,
+  RAPIDAPI_KEY: process.env.RAPIDAPI_KEY,
+  LITEAPI_KEY: process.env.LITEAPI_KEY,
 } as const;
 
 export default env;

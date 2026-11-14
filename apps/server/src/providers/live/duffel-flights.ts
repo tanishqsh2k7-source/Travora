@@ -1,0 +1,175 @@
+import type { IFlightsProvider } from "../base.js";
+import { ProviderError } from "../base.js";
+import type { FlightOffer, FlightSearchQuery, FlightSegment } from "@travora/contracts";
+
+interface DuffelSegment {
+  id: string;
+  origin: { iata_code: string; name?: string };
+  destination: { iata_code: string; name?: string };
+  departing_at: string;
+  arriving_at: string;
+  operating_carrier?: { iata_code?: string; name?: string };
+  marketing_carrier?: { iata_code?: string; name?: string };
+  marketing_carrier_flight_number?: string;
+  duration?: string;
+}
+
+interface DuffelSlice {
+  duration?: string;
+  origin: { iata_code: string };
+  destination: { iata_code: string };
+  segments: DuffelSegment[];
+}
+
+interface DuffelOffer {
+  id: string;
+  owner: { iata_code: string; name: string };
+  total_amount: string;
+  total_currency: string;
+  slices: DuffelSlice[];
+  live_mode?: boolean;
+}
+
+interface DuffelOfferRequestResponse {
+  data: {
+    id: string;
+    offers?: DuffelOffer[];
+  };
+}
+
+export class DuffelFlightsLiveAdapter implements IFlightsProvider {
+  readonly name = "duffel_flights";
+  private apiKey: string;
+  private baseUrl = "https://api.duffel.com/air";
+
+  constructor(apiKey?: string) {
+    this.apiKey = apiKey ?? process.env.DUFFEL_API_KEY ?? "";
+  }
+
+  private parseDurationMinutes(isoDuration?: string): number {
+    if (!isoDuration) return 180;
+    // Format: PT7H30M or PT45M or P1DT2H
+    const match = isoDuration.match(/P(?:(\d+)D)?T?(?:(\d+)H)?(?:(\d+)M)?/);
+    if (!match) return 180;
+    const days = parseInt(match[1] ?? "0", 10);
+    const hours = parseInt(match[2] ?? "0", 10);
+    const minutes = parseInt(match[3] ?? "0", 10);
+    const total = days * 24 * 60 + hours * 60 + minutes;
+    return total > 0 ? total : 180;
+  }
+
+  private toIata(codeOrCity: string): string {
+    const clean = codeOrCity.replace(/[^A-Za-z]/g, "").toUpperCase();
+    if (clean.length >= 3) return clean.slice(0, 3);
+    return clean.padEnd(3, "X");
+  }
+
+  async searchFlights(query: FlightSearchQuery): Promise<FlightOffer[]> {
+    if (!this.apiKey) {
+      throw new ProviderError(this.name, "DUFFEL_API_KEY is not configured", 401);
+    }
+
+    const originIata = this.toIata(query.origin);
+    const destinationIata = this.toIata(query.destination);
+
+    const slices = [
+      {
+        origin: originIata,
+        destination: destinationIata,
+        departure_date: query.departureDate,
+      },
+    ];
+
+    if (query.returnDate) {
+      slices.push({
+        origin: destinationIata,
+        destination: originIata,
+        departure_date: query.returnDate,
+      });
+    }
+
+    const requestBody = {
+      data: {
+        slices,
+        passengers: Array.from({ length: Math.max(1, query.adults) }, () => ({ type: "adult" })),
+        cabin_class: "economy",
+      },
+    };
+
+    const res = await fetch(`${this.baseUrl}/offer_requests?return_offers=true`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${this.apiKey}`,
+        "Duffel-Version": "v2",
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify(requestBody),
+    });
+
+    if (!res.ok) {
+      const errText = await res.text();
+      throw new ProviderError(
+        this.name,
+        `Duffel flight search failed: ${res.status} ${res.statusText}`,
+        res.status,
+        errText
+      );
+    }
+
+    const data = (await res.json()) as DuffelOfferRequestResponse;
+    const offers = data.data?.offers ?? [];
+
+    return offers.slice(0, 10).map((offer): FlightOffer => {
+      const firstSlice = offer.slices?.[0];
+      const segments: FlightSegment[] = (firstSlice?.segments ?? []).map((seg) => ({
+        departureAirport: this.toIata(seg.origin?.iata_code || originIata),
+        arrivalAirport: this.toIata(seg.destination?.iata_code || destinationIata),
+        departureTime: seg.departing_at || `${query.departureDate}T10:00:00Z`,
+        arrivalTime: seg.arriving_at || `${query.departureDate}T14:00:00Z`,
+        carrier: seg.marketing_carrier?.iata_code || seg.operating_carrier?.iata_code || offer.owner?.iata_code || "XX",
+        carrierName: seg.marketing_carrier?.name || seg.operating_carrier?.name || offer.owner?.name || "Airline",
+        flightNumber: seg.marketing_carrier_flight_number || `${offer.owner?.iata_code || "XX"}101`,
+        durationMinutes: this.parseDurationMinutes(seg.duration),
+      }));
+
+      if (segments.length === 0) {
+        segments.push({
+          departureAirport: originIata,
+          arrivalAirport: destinationIata,
+          departureTime: `${query.departureDate}T10:00:00Z`,
+          arrivalTime: `${query.departureDate}T14:00:00Z`,
+          carrier: offer.owner?.iata_code || "XX",
+          carrierName: offer.owner?.name || "Airline",
+          flightNumber: `${offer.owner?.iata_code || "XX"}101`,
+          durationMinutes: this.parseDurationMinutes(firstSlice?.duration),
+        });
+      }
+
+      const totalDuration = this.parseDurationMinutes(firstSlice?.duration);
+      const amountMajor = parseFloat(offer.total_amount || "0");
+      const amountSmallestUnit = Math.round(amountMajor * 100);
+
+      return {
+        id: offer.id,
+        carrier: offer.owner?.iata_code || "XX",
+        carrierName: offer.owner?.name || "Airline",
+        origin: query.origin,
+        destination: query.destination,
+        departureDate: query.departureDate,
+        returnDate: query.returnDate,
+        segments,
+        totalDurationMinutes: totalDuration > 0 ? totalDuration : 180,
+        stops: Math.max(0, segments.length - 1),
+        price: {
+          amount: amountSmallestUnit > 0 ? amountSmallestUnit : 25000,
+          currency: offer.total_currency || query.currency.toUpperCase(),
+        },
+        baggageIncluded: true,
+        bookingUrl: `https://www.google.com/travel/flights?q=flights+from+${query.origin}+to+${query.destination}`,
+        fetchedAt: new Date().toISOString(),
+        provider: this.name,
+      };
+    });
+  }
+}
