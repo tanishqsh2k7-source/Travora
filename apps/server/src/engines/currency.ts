@@ -84,3 +84,29 @@ export function formatMoney(m: Money): string {
   return `${m.currency} ${mainUnit}`;
 }
 
+export const FX_RATES_TO_USD: Record<string, number> = {
+  USD: 1.0,
+  EUR: 1.08,
+  GBP: 1.27,
+  INR: 0.0118, // 1 USD ~ 85 INR -> 1 INR ~ 0.01176 USD
+  JPY: 0.0065, // 1 USD ~ 155 JPY -> 1 JPY ~ 0.00645 USD
+  CAD: 0.73,
+  AUD: 0.66,
+  CHF: 1.12,
+  SGD: 0.74,
+  AED: 0.272,
+};
+
+export function toTargetCurrency(m: Money, targetCurrency: string): Money {
+  const from = m.currency.toUpperCase();
+  const to = targetCurrency.toUpperCase();
+  if (from === to) return m;
+
+  const rateFrom = FX_RATES_TO_USD[from] ?? 1.0;
+  const rateTo = FX_RATES_TO_USD[to] ?? 1.0;
+
+  const inUSD = toDecimal(m.amount).times(rateFrom);
+  const inTarget = inUSD.dividedBy(rateTo);
+  return createMoney(inTarget, to);
+}
+

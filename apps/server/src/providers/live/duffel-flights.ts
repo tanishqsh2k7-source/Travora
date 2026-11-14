@@ -1,6 +1,7 @@
 import type { IFlightsProvider } from "../base.js";
 import { ProviderError } from "../base.js";
 import type { FlightOffer, FlightSearchQuery, FlightSegment } from "@travora/contracts";
+import { toTargetCurrency } from "../../engines/currency.js";
 
 interface DuffelSegment {
   id: string;
@@ -150,6 +151,12 @@ export class DuffelFlightsLiveAdapter implements IFlightsProvider {
       const amountMajor = parseFloat(offer.total_amount || "0");
       const amountSmallestUnit = Math.round(amountMajor * 100);
 
+      const rawPrice = {
+        amount: amountSmallestUnit > 0 ? amountSmallestUnit : 25000,
+        currency: (offer.total_currency || query.currency).toUpperCase(),
+      };
+      const convertedPrice = toTargetCurrency(rawPrice, query.currency.toUpperCase());
+
       return {
         id: offer.id,
         carrier: offer.owner?.iata_code || "XX",
@@ -161,10 +168,7 @@ export class DuffelFlightsLiveAdapter implements IFlightsProvider {
         segments,
         totalDurationMinutes: totalDuration > 0 ? totalDuration : 180,
         stops: Math.max(0, segments.length - 1),
-        price: {
-          amount: amountSmallestUnit > 0 ? amountSmallestUnit : 25000,
-          currency: offer.total_currency || query.currency.toUpperCase(),
-        },
+        price: convertedPrice,
         baggageIncluded: true,
         bookingUrl: `https://www.google.com/travel/flights?q=flights+from+${query.origin}+to+${query.destination}`,
         fetchedAt: new Date().toISOString(),

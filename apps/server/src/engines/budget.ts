@@ -14,6 +14,7 @@ import {
   subtractMoney,
   sumMoney,
   percentageOf,
+  toTargetCurrency,
 } from "./currency.js";
 
 export interface BudgetEngineInput {
@@ -41,24 +42,27 @@ export function calculateBudget(input: BudgetEngineInput): BudgetBreakdown {
 
   // 1. Food calculation: adults + 75% for children
   const effectiveFoodEaters = new Decimal(adults).plus(new Decimal(children).times(0.75));
-  const foodTotalDec = toDecimal(input.dailyFoodAllowancePerPerson.amount)
+  const normalizedFood = toTargetCurrency(input.dailyFoodAllowancePerPerson, currency);
+  const foodTotalDec = toDecimal(normalizedFood.amount)
     .times(effectiveFoodEaters)
     .times(days);
   const foodTotal = createMoney(foodTotalDec, currency);
 
   // 2. Local transport calculation: adults + children
   const totalRiders = new Decimal(adults).plus(children);
-  const transportTotalDec = toDecimal(input.dailyLocalTransportPerPerson.amount)
+  const normalizedTransport = toTargetCurrency(input.dailyLocalTransportPerPerson, currency);
+  const transportTotalDec = toDecimal(normalizedTransport.amount)
     .times(totalRiders)
     .times(days);
   const transportTotal = createMoney(transportTotalDec, currency);
 
-  // 3. Activity total
-  const activityTotal = sumMoney(input.activityTickets, currency);
+  // 3. Activity total (ensure all tickets match currency)
+  const normalizedTickets = input.activityTickets.map((t) => toTargetCurrency(t, currency));
+  const activityTotal = sumMoney(normalizedTickets, currency);
 
-  // 4. Fixed categories
-  const flightsTotal = input.flightsTotal;
-  const accommodationTotal = input.accommodationTotal;
+  // 4. Fixed categories (normalized to currency)
+  const flightsTotal = toTargetCurrency(input.flightsTotal, currency);
+  const accommodationTotal = toTargetCurrency(input.accommodationTotal, currency);
 
   // 5. Subtotal before contingency
   const subtotal = sumMoney(

@@ -1,5 +1,5 @@
 import type { TravelState, TravelStateUpdate } from "../state.js";
-import { optimizeRoutes, calculateBudget, validateSchedule } from "../../engines/index.js";
+import { optimizeRoutes, calculateBudget, validateSchedule, toTargetCurrency } from "../../engines/index.js";
 import { eventService } from "../../services/event-service.js";
 
 export async function itineraryNode(state: TravelState): Promise<TravelStateUpdate> {
@@ -59,14 +59,16 @@ export async function itineraryNode(state: TravelState): Promise<TravelStateUpda
     currency: req.budget.currency,
   }));
 
+  const targetCurrency = req.budget.currency.toUpperCase();
+
   const flightAlternatives = (state.flightsResult ?? []).slice(1).map((f) => ({
     description: `Switch to ${f.carrierName} (${f.stops} stops)`,
-    price: f.price,
+    price: toTargetCurrency(f.price, targetCurrency),
   }));
 
   const hotelAlternatives = (state.hotelsResult ?? []).slice(1).map((h) => ({
     description: `Stay at ${h.name} (${h.hotelStyle})`,
-    price: h.totalPrice,
+    price: toTargetCurrency(h.totalPrice, targetCurrency),
   }));
 
   const budgetResult = calculateBudget({
