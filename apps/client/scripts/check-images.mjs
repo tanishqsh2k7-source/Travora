@@ -14,12 +14,14 @@ const REQUIRED_SLUGS = [
   "paris",
   "udaipur",
   "jodhpur",
-  "destination-6",
-  "destination-7",
-  "destination-8",
+  "kyoto",
+  "rome",
+  "edinburgh",
 ];
 
+// For 2400px ultra-wide hero variants, allow up to 800 KB; for cards and standard displays, limit to 400 KB
 const MAX_FILE_SIZE_BYTES = 400 * 1024; // 400 KB
+const MAX_HERO_2400_BYTES = 800 * 1024; // 800 KB
 
 async function check() {
   console.log("==========================================");
@@ -95,9 +97,10 @@ async function check() {
           scanDir(full);
         } else if (file.endsWith(".avif") || file.endsWith(".webp")) {
           const stat = fs.statSync(full);
-          if (stat.size > MAX_FILE_SIZE_BYTES) {
+          const limit = file.includes("-2400.") ? MAX_HERO_2400_BYTES : MAX_FILE_SIZE_BYTES;
+          if (stat.size > limit) {
             errors.push(
-              `Optimized file exceeds 400 KB limit: ${path.relative(publicDir, full)} (${(
+              `Optimized file exceeds ${(limit / 1024).toFixed(0)} KB limit: ${path.relative(publicDir, full)} (${(
                 stat.size / 1024
               ).toFixed(1)} KB)`
             );

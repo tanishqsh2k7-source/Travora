@@ -34,18 +34,20 @@ async function optimizeImage(filePath) {
     }
 
     // Generate WebP
+    const webpQuality = width >= 2400 ? 75 : 80;
     const webpPath = path.join(dir, `${baseName}-${width}.webp`);
     await sharp(filePath)
       .resize({ width, withoutEnlargement: true })
-      .webp({ quality: 82, effort: 5 })
+      .webp({ quality: webpQuality, effort: 6 })
       .withMetadata(false)
       .toFile(webpPath);
 
     // Generate AVIF
+    const avifQuality = width >= 2400 ? 68 : 74;
     const avifPath = path.join(dir, `${baseName}-${width}.avif`);
     await sharp(filePath)
       .resize({ width, withoutEnlargement: true })
-      .avif({ quality: 78, effort: 5 })
+      .avif({ quality: avifQuality, effort: 6 })
       .withMetadata(false)
       .toFile(avifPath);
 
