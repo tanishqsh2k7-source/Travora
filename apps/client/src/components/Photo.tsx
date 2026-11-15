@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 
 export interface PhotoProps {
   src: string;
@@ -11,6 +11,7 @@ export interface PhotoProps {
   fallbackTitle?: string;
   fallbackSubtitle?: string;
   sizes?: string;
+  fill?: boolean;
 }
 
 export function Photo({
@@ -24,32 +25,54 @@ export function Photo({
   fallbackTitle,
   fallbackSubtitle,
   sizes = "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 1200px",
+  fill = false,
 }: PhotoProps) {
   const [hasError, setHasError] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
-
   const [currentSrc, setCurrentSrc] = useState(src);
   const [triedAlternative, setTriedAlternative] = useState(false);
+  const imgRef = useRef<HTMLImageElement>(null);
 
   // If the initial src prop changes, reset
-  React.useEffect(() => {
+  useEffect(() => {
     setCurrentSrc(src);
     setTriedAlternative(false);
     setHasError(false);
     setIsLoaded(false);
   }, [src]);
 
+  // Check if image is already cached/complete
+  useEffect(() => {
+    if (imgRef.current && imgRef.current.complete && imgRef.current.naturalWidth > 0) {
+      setIsLoaded(true);
+    }
+  }, [currentSrc]);
+
   // Derive srcset paths for WebP and AVIF
   const extIndex = currentSrc.lastIndexOf(".");
   const basePath = extIndex !== -1 ? currentSrc.slice(0, extIndex) : currentSrc;
 
-  const avifSrcSet = [640, 1024, 1600, 2400]
+  // Use appropriate widths: ultra-wide hero (>=1600) has [640, 1024, 1600, 2400], cards have [640, 1024]
+  const isWide = width >= 1600;
+  const widths = isWide ? [640, 1024, 1600, 2400] : [640, 1024];
+
+  const avifSrcSet = widths
     .map((w) => `${basePath}-${w}.avif ${w}w`)
     .join(", ");
 
-  const webpSrcSet = [640, 1024, 1600, 2400]
+  const webpSrcSet = widths
     .map((w) => `${basePath}-${w}.webp ${w}w`)
     .join(", ");
+
+  const isFill = fill || className.includes("hero-slide") || className.includes("dest-card") || className.includes("calm-photo");
+
+  const wrapperStyle: React.CSSProperties = isFill
+    ? { width: "100%", height: "100%" }
+    : {
+        aspectRatio: `${width} / ${height}`,
+        width: "100%",
+        maxWidth: `${width}px`,
+      };
 
   const handleImgError = () => {
     // If it failed on .jpg and hasn't tried .jpeg yet, try .jpeg (or vice versa)
@@ -70,12 +93,8 @@ export function Photo({
   if (hasError || !src) {
     return (
       <div
-        className={`photo-fallback-container ${className}`}
-        style={{
-          aspectRatio: `${width} / ${height}`,
-          width: "100%",
-          maxWidth: `${width}px`,
-        }}
+        className={`photo-fallback-container ${className} ${isFill ? "fill" : ""}`}
+        style={wrapperStyle}
         data-testid="photo-fallback"
         role="img"
         aria-label={alt || fallbackTitle || "Destination image placeholder"}
@@ -96,17 +115,14 @@ export function Photo({
 
   return (
     <div
-      className={`photo-wrapper ${className} ${isLoaded ? "is-loaded" : "is-loading"}`}
-      style={{
-        aspectRatio: `${width} / ${height}`,
-        width: "100%",
-        maxWidth: `${width}px`,
-      }}
+      className={`photo-wrapper ${className} ${isFill ? "fill" : ""} ${isLoaded ? "is-loaded" : "is-loading"}`}
+      style={wrapperStyle}
     >
       <picture>
         <source type="image/avif" srcSet={avifSrcSet} sizes={sizes} />
         <source type="image/webp" srcSet={webpSrcSet} sizes={sizes} />
         <img
+          ref={imgRef}
           src={currentSrc}
           alt={alt}
           width={width}

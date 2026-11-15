@@ -262,13 +262,14 @@ export function PlanningProgress({
           <div className="destination-preview-column">
             <div className="calm-photo-card">
               <Photo
-                src={`/images/destinations/${destination.toLowerCase().split(",")[0].trim()}-card.jpg`}
+                src={`/images/destinations/${destination.toLowerCase().split(",")[0].trim()}/card.jpg`}
                 alt={destination}
                 width={800}
                 height={600}
                 fallbackTitle={destination}
                 fallbackSubtitle="Curating optimal itinerary"
                 className="calm-photo-img"
+                fill
               />
               <div className="calm-photo-scrim">
                 <div className="calm-photo-caption">

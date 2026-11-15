@@ -129,6 +129,7 @@ export function LandingSections({
                     fallbackTitle={dest.name}
                     fallbackSubtitle={dest.country}
                     className="dest-card-photo"
+                    fill
                   />
                   <div className="dest-card-duration-badge">
                     <Clock className="w-3.5 h-3.5" />

@@ -44,6 +44,8 @@ export function HeroBanner({ children }: HeroBannerProps) {
                 fallbackTitle={slide.name}
                 fallbackSubtitle={slide.country}
                 className="hero-slide-photo"
+                sizes="100vw"
+                fill
               />
             </div>
           );
@@ -62,18 +64,16 @@ export function HeroBanner({ children }: HeroBannerProps) {
           <p className="hero-subline">
             Flights, stays and a day-by-day plan, including when to move on to your next hotel.
           </p>
+
+          {/* Location badge (removed photographer attribution) */}
+          <div className="hero-photo-credit">
+            <MapPin className="w-3.5 h-3.5 inline-block text-terracotta" />
+            <span>{activeSlide.name}, {activeSlide.country}</span>
+          </div>
         </div>
 
         {/* Embedded / Overlapping Planner Card */}
         {children && <div className="hero-planner-slot">{children}</div>}
-
-        {/* Photo credit & Location caption */}
-        <div className="hero-photo-credit">
-          <MapPin className="w-3.5 h-3.5 inline-block" />
-          <span>
-            {activeSlide.name}, {activeSlide.country} • Photo by {activeSlide.credit}
-          </span>
-        </div>
       </div>
     </section>
   );
