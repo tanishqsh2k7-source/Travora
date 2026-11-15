@@ -43,7 +43,12 @@ describe("Photo component", () => {
       />
     );
 
-    const img = screen.getByRole("img", { name: "Missing image" });
+    // Initial error on .jpg triggers retry with .jpeg
+    let img = screen.getByRole("img", { name: "Missing image" });
+    fireEvent.error(img);
+
+    // Second error on .jpeg triggers fallback card
+    img = screen.getByRole("img", { name: "Missing image" });
     fireEvent.error(img);
 
     expect(screen.getByText("Udaipur Palace")).toBeTruthy();

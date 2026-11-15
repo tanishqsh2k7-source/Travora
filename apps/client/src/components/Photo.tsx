@@ -28,9 +28,20 @@ export function Photo({
   const [hasError, setHasError] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
 
+  const [currentSrc, setCurrentSrc] = useState(src);
+  const [triedAlternative, setTriedAlternative] = useState(false);
+
+  // If the initial src prop changes, reset
+  React.useEffect(() => {
+    setCurrentSrc(src);
+    setTriedAlternative(false);
+    setHasError(false);
+    setIsLoaded(false);
+  }, [src]);
+
   // Derive srcset paths for WebP and AVIF
-  const extIndex = src.lastIndexOf(".");
-  const basePath = extIndex !== -1 ? src.slice(0, extIndex) : src;
+  const extIndex = currentSrc.lastIndexOf(".");
+  const basePath = extIndex !== -1 ? currentSrc.slice(0, extIndex) : currentSrc;
 
   const avifSrcSet = [640, 1024, 1600, 2400]
     .map((w) => `${basePath}-${w}.avif ${w}w`)
@@ -39,6 +50,22 @@ export function Photo({
   const webpSrcSet = [640, 1024, 1600, 2400]
     .map((w) => `${basePath}-${w}.webp ${w}w`)
     .join(", ");
+
+  const handleImgError = () => {
+    // If it failed on .jpg and hasn't tried .jpeg yet, try .jpeg (or vice versa)
+    if (!triedAlternative) {
+      setTriedAlternative(true);
+      if (currentSrc.endsWith(".jpg")) {
+        setCurrentSrc(currentSrc.replace(/\.jpg$/, ".jpeg"));
+        return;
+      }
+      if (currentSrc.endsWith(".jpeg")) {
+        setCurrentSrc(currentSrc.replace(/\.jpeg$/, ".jpg"));
+        return;
+      }
+    }
+    setHasError(true);
+  };
 
   if (hasError || !src) {
     return (
@@ -80,7 +107,7 @@ export function Photo({
         <source type="image/avif" srcSet={avifSrcSet} sizes={sizes} />
         <source type="image/webp" srcSet={webpSrcSet} sizes={sizes} />
         <img
-          src={src}
+          src={currentSrc}
           alt={alt}
           width={width}
           height={height}
@@ -90,7 +117,7 @@ export function Photo({
           style={{ objectPosition: focalPoint }}
           className={`photo-img ${isLoaded ? "visible" : "hidden"}`}
           onLoad={() => setIsLoaded(true)}
-          onError={() => setHasError(true)}
+          onError={handleImgError}
         />
       </picture>
       {!isLoaded && <div className="photo-placeholder-shimmer" aria-hidden="true" />}

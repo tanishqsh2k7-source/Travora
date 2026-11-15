@@ -44,12 +44,17 @@ async function check() {
   // 2. Check presence and resolution of image assets
   for (const slug of REQUIRED_SLUGS) {
     const slugDir = path.join(destinationsDir, slug);
-    const heroPath = path.join(slugDir, "hero.jpg");
-    const cardPath = path.join(slugDir, "card.jpg");
+    const heroJpg = path.join(slugDir, "hero.jpg");
+    const heroJpeg = path.join(slugDir, "hero.jpeg");
+    const heroPath = fs.existsSync(heroJpg) ? heroJpg : fs.existsSync(heroJpeg) ? heroJpeg : null;
+
+    const cardJpg = path.join(slugDir, "card.jpg");
+    const cardJpeg = path.join(slugDir, "card.jpeg");
+    const cardPath = fs.existsSync(cardJpg) ? cardJpg : fs.existsSync(cardJpeg) ? cardJpeg : null;
 
     // Check Hero Image
-    if (!fs.existsSync(heroPath)) {
-      missingFiles.push(`public/images/destinations/${slug}/hero.jpg`);
+    if (!heroPath) {
+      missingFiles.push(`public/images/destinations/${slug}/hero.jpg (or .jpeg)`);
     } else {
       try {
         const meta = await sharp(heroPath).metadata();
@@ -64,8 +69,8 @@ async function check() {
     }
 
     // Check Card Image
-    if (!fs.existsSync(cardPath)) {
-      missingFiles.push(`public/images/destinations/${slug}/card.jpg`);
+    if (!cardPath) {
+      missingFiles.push(`public/images/destinations/${slug}/card.jpg (or .jpeg)`);
     } else {
       try {
         const meta = await sharp(cardPath).metadata();

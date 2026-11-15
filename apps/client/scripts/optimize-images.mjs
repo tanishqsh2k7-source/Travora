@@ -71,7 +71,13 @@ async function run() {
 
     const files = fs.readdirSync(slugPath);
     for (const file of files) {
-      if (file === "hero.jpg" || file === "card.jpg") {
+      const lower = file.toLowerCase();
+      if (
+        lower === "hero.jpg" ||
+        lower === "hero.jpeg" ||
+        lower === "card.jpg" ||
+        lower === "card.jpeg"
+      ) {
         await optimizeImage(path.join(slugPath, file));
         count++;
       }

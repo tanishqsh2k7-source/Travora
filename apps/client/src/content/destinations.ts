@@ -6,6 +6,8 @@ export interface Destination {
   suggestedDays: string;
   heroImage: string;
   cardImage: string;
+  heroImageJpeg?: string;
+  cardImageJpeg?: string;
   alt: string;
   credit: string;
   source: string;
@@ -27,6 +29,8 @@ export const DESTINATIONS: Destination[] = [
     suggestedDays: "4 to 7 days",
     heroImage: "/images/destinations/lisbon/hero.jpg",
     cardImage: "/images/destinations/lisbon/card.jpg",
+    heroImageJpeg: "/images/destinations/lisbon/hero.jpeg",
+    cardImageJpeg: "/images/destinations/lisbon/card.jpeg",
     alt: "Warm golden light over Lisbon hillside terracotta roofs and the Tagus River",
     credit: "Pending photographer attribution",
     source: "User supplied",
@@ -46,6 +50,8 @@ export const DESTINATIONS: Destination[] = [
     suggestedDays: "5 to 9 days",
     heroImage: "/images/destinations/tokyo/hero.jpg",
     cardImage: "/images/destinations/tokyo/card.jpg",
+    heroImageJpeg: "/images/destinations/tokyo/hero.jpeg",
+    cardImageJpeg: "/images/destinations/tokyo/card.jpeg",
     alt: "Tokyo cityscape with traditional pagoda framed against twilight city skyline",
     credit: "Pending photographer attribution",
     source: "User supplied",
