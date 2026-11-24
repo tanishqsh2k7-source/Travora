@@ -40,11 +40,11 @@
 .curated-journey-tag {
   font-size: 0.8125rem;
   font-weight: 600;
-  color: var(--color-terracotta, #C85A32);
-  background: rgba(200, 90, 50, 0.08);
+  color: #6E3B1C;
+  background: rgba(110, 59, 28, 0.08);
   padding: 0.25rem 0.75rem;
   border-radius: 9999px;
-  border: 1px solid rgba(200, 90, 50, 0.2);
+  border: 1px solid rgba(110, 59, 28, 0.2);
 }
 
 .demo-badge-container {
@@ -231,8 +231,8 @@
 }
 
 .nav-tab-btn.active {
-  color: var(--color-terracotta, #C85A32);
-  border-bottom-color: var(--color-terracotta, #C85A32);
+  color: #225938;
+  border-bottom-color: #225938;
 }
 
 /* ── 3. JOURNEY STRIP ────────────────────────────────────────────────────── */
@@ -1194,6 +1194,25 @@
   font-size: 0.8125rem;
   font-weight: 600;
   color: #059669;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: #ECFDF5;
+  padding: 0.2rem 0.55rem;
+  border-radius: 6px;
+  border: 1px solid #A7F3D0;
+}
+
+.event-cost-pill.free {
+  color: #0F766E;
+  background: #F0FDFA;
+  border-color: #CCFBF1;
+  font-weight: 500;
+}
+
+.cost-ticket-tag {
+  font-size: 0.75rem;
+  opacity: 0.85;
 }
 
 .event-location-line {
@@ -1422,35 +1441,916 @@
   }
 }
 
-/* ── 8. PRINT STYLESHEET (A4 Clean Output) ───────────────────────────────── */
+/* ── 8. FLIGHT OPTIONS STYLES ────────────────────────────────────────────── */
+.flight-options-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.flight-options-header {
+  background: var(--color-surface, #ffffff);
+  border: 1px solid var(--color-border, #E2E8F0);
+  border-radius: 16px;
+  padding: 1.75rem 2rem;
+  box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05);
+}
+
+.header-route-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--accent-primary, #2563EB);
+  background: #EFF6FF;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  margin-bottom: 0.5rem;
+  border: 1px solid #BFDBFE;
+}
+
+.header-title {
+  font-family: var(--font-serif, "Playfair Display", Georgia, serif);
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--text-primary, #0F172A);
+  margin-bottom: 0.35rem;
+}
+
+.header-subline {
+  font-size: 0.9375rem;
+  color: var(--text-secondary, #475569);
+  margin-bottom: 1.25rem;
+}
+
+.flight-controls-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid var(--color-border, #E2E8F0);
+  padding-top: 1.25rem;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.filter-pill-group,
+.sort-pill-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.control-label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-muted, #64748B);
+}
+
+.pill-btn {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  padding: 0.35rem 0.85rem;
+  border-radius: 9999px;
+  border: 1px solid var(--color-border, #E2E8F0);
+  background: #FFFFFF;
+  color: var(--text-secondary, #475569);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.pill-btn:hover {
+  background: #F8FAFC;
+  border-color: #CBD5E1;
+}
+
+.pill-btn.active {
+  background: var(--accent-primary, #2563EB);
+  color: #FFFFFF;
+  border-color: var(--accent-primary, #2563EB);
+  font-weight: 600;
+}
+
+.flight-cards-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.flight-offer-card {
+  background: #FFFFFF;
+  border: 1px solid var(--color-border, #E2E8F0);
+  border-radius: 16px;
+  padding: 1.5rem 2rem;
+  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04);
+  transition: all 0.25s ease;
+  position: relative;
+}
+
+.flight-offer-card:hover {
+  border-color: #93C5FD;
+  box-shadow: 0 8px 24px -4px rgba(37, 99, 235, 0.1);
+  transform: translateY(-2px);
+}
+
+.flight-offer-card.is-selected {
+  border: 2px solid var(--accent-primary, #2563EB);
+  background: #F8FAFC;
+}
+
+.flight-card-top-tags {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.tag-pill {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.2rem 0.6rem;
+  border-radius: 9999px;
+  display: inline-flex;
+  align-items: center;
+}
+
+.tag-recommended {
+  background: #FEF3C7;
+  color: #B45309;
+  border: 1px solid #FCD34D;
+}
+
+.tag-direct {
+  background: #ECFDF5;
+  color: #059669;
+  border: 1px solid #A7F3D0;
+}
+
+.tag-baggage {
+  background: #F1F5F9;
+  color: #475569;
+  border: 1px solid #E2E8F0;
+}
+
+.flight-card-main-grid {
+  display: grid;
+  grid-template-columns: 1.3fr 2fr 1.2fr;
+  align-items: center;
+  gap: 2rem;
+}
+
+.airline-col {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.airline-logo-box {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: #EFF6FF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: 1px solid #DBEAFE;
+}
+
+.airline-name {
+  display: block;
+  font-size: 1.05rem;
+  color: #0F172A;
+  margin-bottom: 0.25rem;
+}
+
+.flight-number {
+  display: block;
+  font-size: 0.8125rem;
+  color: #64748B;
+}
+
+.times-col {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.25rem;
+}
+
+.departure-block,
+.arrival-block {
+  text-align: center;
+  min-width: 70px;
+}
+
+.time-val {
+  display: block;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #0F172A;
+}
+
+.airport-code {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #64748B;
+}
+
+.flight-path-bar {
+  flex: 1;
+  text-align: center;
+  padding: 0 0.5rem;
+}
+
+.duration-label {
+  display: block;
+  font-size: 0.75rem;
+  color: #64748B;
+  margin-bottom: 0.25rem;
+}
+
+.path-line {
+  height: 2px;
+  background: #CBD5E1;
+  position: relative;
+  margin: 0.5rem 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.path-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #64748B;
+}
+
+.path-stop-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #EA580C;
+  border: 2px solid #FFFFFF;
+}
+
+.stops-label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #64748B;
+}
+
+.price-action-col {
+  text-align: right;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.5rem;
+}
+
+.price-label {
+  font-size: 0.75rem;
+  color: #64748B;
+  display: block;
+}
+
+.price-amount {
+  font-family: var(--font-serif, "Playfair Display", Georgia, serif);
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #0F172A;
+}
+
+.taxes-sub {
+  font-size: 0.7rem;
+  color: #94A3B8;
+  display: block;
+}
+
+.action-buttons-group {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.35rem;
+}
+
+.selected-active-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #059669;
+  background: #ECFDF5;
+  border: 1px solid #A7F3D0;
+  padding: 0.4rem 0.85rem;
+  border-radius: 8px;
+}
+
+.airline-site-link {
+  font-size: 0.75rem;
+  color: #64748B;
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+.airline-site-link:hover {
+  color: #2563EB;
+}
+
+.flight-options-footer-note {
+  display: flex;
+  align-items: center;
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 12px;
+  padding: 1rem 1.5rem;
+  font-size: 0.8125rem;
+  color: #64748B;
+  line-height: 1.4;
+}
+
+/* ── 8B. HOTEL OPTIONS VIEW ─────────────────────────────────────────────── */
+.hotel-options-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.hotel-options-header {
+  background: var(--color-surface, #ffffff);
+  border: 1px solid var(--border-color, #E5DFD4);
+  border-radius: 16px;
+  padding: 1.75rem 2rem;
+  box-shadow: 0 4px 20px -2px rgba(35, 27, 21, 0.05);
+}
+
+.header-stay-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #225938;
+  background: #EAF3EC;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  margin-bottom: 0.5rem;
+  border: 1px solid #C4DFC9;
+}
+
+.stay-city-switcher-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 1.25rem 0;
+  padding: 0.85rem 1rem;
+  background: #FAF7F2;
+  border-radius: 10px;
+  border: 1px solid #E5DFD4;
+  flex-wrap: wrap;
+}
+
+.switcher-label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #574639;
+}
+
+.stay-chips-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.stay-city-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.85rem;
+  border-radius: 8px;
+  border: 1px solid #D6CCC0;
+  background: #FFFFFF;
+  color: #231B15;
+  font-size: 0.8125rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.stay-city-chip.active {
+  background: #225938;
+  color: #FFFFFF;
+  border-color: #225938;
+}
+
+.chip-stay-num {
+  font-size: 0.75rem;
+  opacity: 0.8;
+}
+
+.chip-stay-nights {
+  font-size: 0.75rem;
+  opacity: 0.85;
+}
+
+.hotel-controls-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid #E5DFD4;
+  padding-top: 1.25rem;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.hotel-cards-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.hotel-offer-card {
+  background: #FFFFFF;
+  border: 1px solid #E5DFD4;
+  border-radius: 16px;
+  padding: 1.5rem 2rem;
+  box-shadow: 0 2px 10px rgba(35, 27, 21, 0.04);
+  transition: all 0.25s ease;
+  position: relative;
+}
+
+.hotel-offer-card:hover {
+  border-color: #C4DFC9;
+  box-shadow: 0 8px 24px -4px rgba(34, 89, 56, 0.12);
+  transform: translateY(-2px);
+}
+
+.hotel-offer-card.is-selected {
+  border: 2px solid #225938;
+  background: #FAF7F2;
+}
+
+.hotel-card-top-tags {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.tag-stars {
+  background: #FEF3C7;
+  color: #B45309;
+  border: 1px solid #FCD34D;
+}
+
+.tag-style {
+  background: #EAF3EC;
+  color: #225938;
+  border: 1px solid #C4DFC9;
+}
+
+.hotel-card-main-grid {
+  display: grid;
+  grid-template-columns: 2fr 1.2fr;
+  align-items: start;
+  gap: 2rem;
+}
+
+@media (max-width: 768px) {
+  .hotel-card-main-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+}
+
+.hotel-info-col {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.hotel-title-line {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.hotel-name {
+  font-family: var(--font-serif, "Playfair Display", Georgia, serif);
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #231B15;
+  margin: 0;
+}
+
+.hotel-location-line {
+  font-size: 0.8125rem;
+  color: #6E3B1C;
+  font-weight: 500;
+}
+
+.hotel-desc-text {
+  font-size: 0.875rem;
+  color: #574639;
+  line-height: 1.45;
+  margin: 0.25rem 0;
+}
+
+.hotel-amenities-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  margin-top: 0.35rem;
+}
+
+.amenity-chip {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #225938;
+  background: #EAF3EC;
+  padding: 0.2rem 0.6rem;
+  border-radius: 6px;
+  border: 1px solid #C4DFC9;
+}
+
+.hotel-cancellation-notice {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.75rem;
+  color: #1B6E3F;
+  font-weight: 500;
+  margin-top: 0.35rem;
+}
+
+.hotel-price-col {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.85rem;
+  border-left: 1px solid #E5DFD4;
+  padding-left: 1.75rem;
+}
+
+@media (max-width: 768px) {
+  .hotel-price-col {
+    align-items: flex-start;
+    border-left: none;
+    padding-left: 0;
+    border-top: 1px solid #E5DFD4;
+    padding-top: 1rem;
+  }
+}
+
+.hotel-rating-box {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.rating-score {
+  display: inline-flex;
+  align-items: center;
+  background: #FEF3C7;
+  color: #B45309;
+  font-size: 0.875rem;
+  padding: 0.25rem 0.6rem;
+  border-radius: 6px;
+  border: 1px solid #FCD34D;
+}
+
+.rating-scale {
+  font-size: 0.75rem;
+  opacity: 0.7;
+  margin-left: 2px;
+}
+
+.rating-label {
+  font-size: 0.75rem;
+  color: #796A5D;
+}
+
+.pricing-box {
+  text-align: right;
+}
+
+@media (max-width: 768px) {
+  .pricing-box {
+    text-align: left;
+  }
+}
+
+.nightly-rate-line {
+  display: flex;
+  align-items: baseline;
+  justify-content: flex-end;
+  gap: 0.25rem;
+}
+
+@media (max-width: 768px) {
+  .nightly-rate-line {
+    justify-content: flex-start;
+  }
+}
+
+.rate-amount {
+  font-family: var(--font-serif, "Playfair Display", Georgia, serif);
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #231B15;
+  line-height: 1;
+}
+
+.rate-unit {
+  font-size: 0.8125rem;
+  color: #796A5D;
+}
+
+.total-stay-price {
+  display: block;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #6E3B1C;
+  margin-top: 0.2rem;
+}
+
+.taxes-note {
+  display: block;
+  font-size: 0.7rem;
+  color: #9CA3AF;
+}
+
+.hotel-action-buttons {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+@media (max-width: 768px) {
+  .hotel-action-buttons {
+    align-items: flex-start;
+  }
+}
+
+.selected-active-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.85rem;
+  background: #EAF3EC;
+  color: #225938;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  border-radius: 8px;
+  border: 1px solid #C4DFC9;
+}
+
+.select-hotel-btn {
+  width: 100%;
+  max-width: 200px;
+}
+
+.booking-partner-link {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.75rem;
+  color: #225938;
+  text-decoration: underline;
+  transition: color 0.15s ease;
+}
+
+.booking-partner-link:hover {
+  color: #173E26;
+}
+
+.hotel-options-footer-note {
+  display: flex;
+  align-items: flex-start;
+  background: #FAF7F2;
+  border: 1px solid #E5DFD4;
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+  font-size: 0.8125rem;
+  color: #574639;
+  line-height: 1.45;
+}
+
+/* Stay Timeline switch hotel button */
+.btn-switch-hotel {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #225938;
+  background: #EAF3EC;
+  border: 1px solid #C4DFC9;
+  border-radius: 6px;
+  padding: 0.35rem 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-switch-hotel:hover {
+  background: #225938;
+  color: #FFFFFF;
+}
+
+.stay-footer-right {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+/* ── 9. PRINT STYLESHEET (Seamless PDF & Print Dossier) ─────────────────── */
+.print-only-itinerary-dossier {
+  display: none;
+}
+
+@page {
+  size: A4 portrait;
+  margin: 14mm 12mm 14mm 12mm;
+}
+
 @media print {
-  body {
-    background: #ffffff !important;
-    color: #000000 !important;
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 
+  body {
+    background: #FFFFFF !important;
+    color: #0F172A !important;
+    font-size: 10pt !important;
+  }
+
+  /* Hide interactive web chrome */
+  .site-header,
   .navbar,
-  .itinerary-nav-tabs-bar,
   .header-actions-row,
+  .itinerary-nav-tabs-bar,
+  .itinerary-tab-panels,
   .demo-badge-container,
   .accordion-arrow,
   .btn,
-  .accordion-toggle-btns {
+  .btn-text-action,
+  .accordion-toggle-btns,
+  .curated-journey-tag,
+  .route-map-wrapper {
     display: none !important;
   }
 
-  .itinerary-v2-container,
-  .itinerary-header-band,
-  .journey-strip-wrapper,
-  .stay-card,
-  .day-accordion-card,
-  .route-map-wrapper {
-    border: 1px solid #cccccc !important;
-    box-shadow: none !important;
+  /* Show the complete dossier */
+  .print-only-itinerary-dossier {
+    display: block !important;
+    width: 100% !important;
+  }
+
+  .print-dossier-header {
+    border-bottom: 2px solid #0F172A;
+    padding-bottom: 12px;
+    margin-bottom: 18px;
+  }
+
+  .print-brand-line {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+  }
+
+  .print-brand-name {
+    font-size: 16pt;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    color: #2563EB;
+  }
+
+  .print-dossier-tag {
+    font-size: 9pt;
+    text-transform: uppercase;
+    font-weight: 600;
+    color: #64748B;
+  }
+
+  .print-trip-title {
+    font-size: 20pt;
+    font-weight: 700;
+    color: #0F172A;
+    margin: 4px 0 8px 0;
+  }
+
+  .print-meta-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    background: #F8FAFC;
+    border: 1px solid #E2E8F0;
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-size: 9pt;
+  }
+
+  .print-section {
+    margin-top: 16px;
+  }
+
+  .print-section-heading {
+    font-size: 12pt;
+    font-weight: 700;
+    color: #0F172A;
+    border-bottom: 1px solid #E2E8F0;
+    padding-bottom: 4px;
+    margin-bottom: 10px;
+    page-break-after: avoid;
+    break-after: avoid;
+  }
+
+  .print-stays-summary {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+
+  .print-stay-item {
+    border: 1px solid #CBD5E1;
+    border-radius: 6px;
+    padding: 8px;
+    font-size: 8.5pt;
     page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  .print-stay-addr {
+    color: #64748B;
+    font-size: 8pt;
+    margin-top: 2px;
+  }
+
+  /* Prevent awkward page cuts */
+  .day-accordion-card {
+    border: 1px solid #CBD5E1 !important;
+    border-radius: 8px !important;
+    margin-bottom: 14px !important;
+    box-shadow: none !important;
+    page-break-inside: auto !important;
+    break-inside: auto !important;
+  }
+
+  .day-accordion-header {
+    background: #F1F5F9 !important;
+    padding: 8px 12px !important;
+    border-bottom: 1px solid #E2E8F0 !important;
+    page-break-after: avoid !important;
+    break-after: avoid !important;
   }
 
   .day-accordion-content {
     display: block !important;
+    padding: 10px !important;
+  }
+
+  .narrative-day-box {
+    background: #F8FAFC !important;
+    border: 1px solid #E2E8F0 !important;
+    margin-bottom: 10px !important;
+    padding: 8px !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  .event-timeline-item {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    margin-bottom: 6px !important;
+  }
+
+  .event-card-box {
+    border: 1px solid #E2E8F0 !important;
+    box-shadow: none !important;
+    padding: 6px 10px !important;
+  }
+
+  .event-connector-line {
+    display: none !important;
+  }
+
+  .print-footer-mark {
+    text-align: center;
+    border-top: 1px solid #CBD5E1;
+    margin-top: 20px;
+    padding-top: 8px;
+    font-size: 8pt;
+    color: #64748B;
+    page-break-before: auto;
   }
 }

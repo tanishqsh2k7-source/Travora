@@ -3,6 +3,9 @@ import type {
   AgentEvent,
   FinalPlanResponse,
   ReplanRequest,
+  AuthUser,
+  LoginRequest,
+  RegisterRequest,
 } from "@travora/contracts";
 
 export interface TripResponse {
@@ -73,6 +76,75 @@ export function setStoredToken(token: string): void {
 
 export function clearStoredToken(): void {
   localStorage.removeItem(TOKEN_KEY);
+}
+
+/**
+ * Log in with existing user credentials and save token.
+ */
+export async function loginUser(req: LoginRequest): Promise<AuthUser> {
+  const res = await fetch("/api/v1/auth/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(req),
+  });
+
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.error || `Login failed (${res.status})`);
+  }
+
+  setStoredToken(data.token);
+  return data.user;
+}
+
+/**
+ * Register a new user account and save token.
+ */
+export async function registerUser(req: RegisterRequest): Promise<AuthUser> {
+  const res = await fetch("/api/v1/auth/register", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(req),
+  });
+
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.error || `Registration failed (${res.status})`);
+  }
+
+  setStoredToken(data.token);
+  return data.user;
+}
+
+/**
+ * Fetch current authenticated user profile, or null if unauthenticated.
+ */
+export async function fetchCurrentUser(): Promise<AuthUser | null> {
+  const token = getStoredToken();
+  if (!token) return null;
+
+  try {
+    const res = await fetch("/api/v1/auth/me", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) {
+      if (res.status === 401) {
+        clearStoredToken();
+      }
+      return null;
+    }
+    const data = await res.json();
+    return data.user;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Log out user by clearing stored token.
+ */
+export function logoutUser(): void {
+  clearStoredToken();
 }
 
 /**

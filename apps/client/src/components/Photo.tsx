@@ -48,7 +48,9 @@ export function Photo({
     }
   }, [currentSrc]);
 
-  // Derive srcset paths for WebP and AVIF
+  const isRemote = currentSrc.startsWith("http://") || currentSrc.startsWith("https://");
+
+  // Derive srcset paths for WebP and AVIF only for local images
   const extIndex = currentSrc.lastIndexOf(".");
   const basePath = extIndex !== -1 ? currentSrc.slice(0, extIndex) : currentSrc;
 
@@ -56,13 +58,13 @@ export function Photo({
   const isWide = width >= 1600;
   const widths = isWide ? [640, 1024, 1600, 2400] : [640, 1024];
 
-  const avifSrcSet = widths
-    .map((w) => `${basePath}-${w}.avif ${w}w`)
-    .join(", ");
+  const avifSrcSet = !isRemote
+    ? widths.map((w) => `${basePath}-${w}.avif ${w}w`).join(", ")
+    : undefined;
 
-  const webpSrcSet = widths
-    .map((w) => `${basePath}-${w}.webp ${w}w`)
-    .join(", ");
+  const webpSrcSet = !isRemote
+    ? widths.map((w) => `${basePath}-${w}.webp ${w}w`).join(", ")
+    : undefined;
 
   const isFill = fill || className.includes("hero-slide") || className.includes("dest-card") || className.includes("calm-photo");
 
@@ -75,6 +77,10 @@ export function Photo({
       };
 
   const handleImgError = () => {
+    if (isRemote) {
+      setHasError(true);
+      return;
+    }
     // If it failed on .jpg and hasn't tried .jpeg yet, try .jpeg (or vice versa)
     if (!triedAlternative) {
       setTriedAlternative(true);
@@ -119,8 +125,8 @@ export function Photo({
       style={wrapperStyle}
     >
       <picture>
-        <source type="image/avif" srcSet={avifSrcSet} sizes={sizes} />
-        <source type="image/webp" srcSet={webpSrcSet} sizes={sizes} />
+        {!isRemote && avifSrcSet && <source type="image/avif" srcSet={avifSrcSet} sizes={sizes} />}
+        {!isRemote && webpSrcSet && <source type="image/webp" srcSet={webpSrcSet} sizes={sizes} />}
         <img
           ref={imgRef}
           src={currentSrc}

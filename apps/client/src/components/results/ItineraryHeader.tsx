@@ -19,9 +19,8 @@ interface ItineraryHeaderProps {
 
 export function ItineraryHeader({ itinerary, onOpenReplanModal }: ItineraryHeaderProps) {
   const [copied, setCopied] = useState(false);
-  const [showDemoPopover, setShowDemoPopover] = useState(false);
 
-  const { summary, startDate, endDate, nights, travellers, currency, dataMode } = itinerary;
+  const { summary, startDate, endDate, nights, travellers, currency } = itinerary;
 
   const formatDateRange = () => {
     const start = new Date(startDate);
@@ -62,38 +61,6 @@ export function ItineraryHeader({ itinerary, onOpenReplanModal }: ItineraryHeade
               <Sparkles className="w-3.5 h-3.5 inline mr-1 text-terracotta" />
               Custom Curated Journey
             </span>
-
-            {/* Demo / Live Data Badge */}
-            <div className="demo-badge-container">
-              <button
-                type="button"
-                className={`data-mode-badge mode-${dataMode}`}
-                onClick={() => setShowDemoPopover((p) => !p)}
-                title="Click to learn about data sources"
-              >
-                <Info className="w-3.5 h-3.5 inline mr-1" />
-                {dataMode === "live" ? "Live Verified Offers" : "Demo Data (Simulated)"}
-              </button>
-
-              {showDemoPopover && (
-                <div className="demo-popover">
-                  <div className="popover-arrow"></div>
-                  <strong className="popover-title">
-                    {dataMode === "live" ? "Live API Verification" : "Simulated Market Data"}
-                  </strong>
-                  <p className="popover-text">
-                    Prices and availability are simulated using representative market fixtures. No
-                    live bookings or cards were charged.
-                  </p>
-                  <button
-                    className="popover-close-btn"
-                    onClick={() => setShowDemoPopover(false)}
-                  >
-                    Got it
-                  </button>
-                </div>
-              )}
-            </div>
           </div>
 
           <h1 className="header-main-title">{summary.title}</h1>

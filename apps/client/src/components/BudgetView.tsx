@@ -102,16 +102,17 @@ export function BudgetView({ budget }: BudgetViewProps) {
         })}
       </div>
 
-      {/* Cost-saving tips */}
+      {/* Cost-saving tips & insights */}
       <div className="budget-tips-card">
-        <h4>💡 Deterministic Budget Engine Insights</h4>
+        <h4>💡 Budget Notes & Safety Buffer</h4>
         <ul>
-          <li>All arithmetic is computed via exact Decimal.js integer smallest-units (no floating point drift).</li>
-          <li>A {budget.contingencyPct}% contingency buffer is automatically allocated for unexpected transit or ticket surges.</li>
-          <li>Remaining budget buffer: {formatMoney(budget.remainingBudget)}</li>
+          <li>Includes a {budget.contingencyPct}% safety buffer reserved for unexpected local transit, tolls, or minor ticket surges.</li>
+          {budget.remainingBudget && (
+            <li>Projected remaining unallocated buffer: {formatMoney(budget.remainingBudget)}</li>
+          )}
           {budget.alternatives && budget.alternatives.length > 0 && (
             <li>
-              Alternative: {budget.alternatives[0].description} (potential savings: {formatMoney(budget.alternatives[0].potentialSavings)})
+              Smart savings recommendation: {budget.alternatives[0].description} (save approximately {formatMoney(budget.alternatives[0].potentialSavings)})
             </li>
           )}
         </ul>

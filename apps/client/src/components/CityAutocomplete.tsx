@@ -193,10 +193,14 @@ export function CityAutocomplete({
     }
   };
 
+  const inputId = React.useId();
+  const listboxId = React.useId();
+
   return (
     <div className={`city-autocomplete-container ${className}`} ref={containerRef}>
       <div className="city-input-wrapper">
         <input
+          id={inputId}
           type="text"
           required={required}
           value={value}
@@ -210,14 +214,29 @@ export function CityAutocomplete({
           placeholder={placeholder}
           className="city-text-input"
           autoComplete="off"
+          role="combobox"
+          aria-autocomplete="list"
+          aria-expanded={isOpen}
+          aria-controls={listboxId}
+          aria-activedescendant={
+            isOpen && highlightedIndex >= 0 ? `${listboxId}-option-${highlightedIndex}` : undefined
+          }
         />
       </div>
 
       {isOpen && filtered.length > 0 && (
-        <ul className="city-dropdown-menu">
+        <ul
+          id={listboxId}
+          role="listbox"
+          aria-label="City suggestions"
+          className="city-dropdown-menu"
+        >
           {filtered.map((item, idx) => (
             <li
+              id={`${listboxId}-option-${idx}`}
               key={item.label}
+              role="option"
+              aria-selected={highlightedIndex === idx}
               className={`city-dropdown-item ${highlightedIndex === idx ? "highlighted" : ""}`}
               onMouseDown={(e) => {
                 e.preventDefault(); // Prevents input blur before select
@@ -225,7 +244,7 @@ export function CityAutocomplete({
               }}
               onMouseEnter={() => setHighlightedIndex(idx)}
             >
-              <div className="city-item-icon">
+              <div className="city-item-icon" aria-hidden="true">
                 <MapPinIcon className="w-4 h-4 text-emerald" />
               </div>
               <div className="city-item-details">

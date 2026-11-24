@@ -486,24 +486,209 @@ export class HotelsFixtureAdapter implements IHotelsProvider {
           provider: this.name,
         },
       ];
+    } else if (
+      destLower.includes("jodhpur") ||
+      destLower.includes("jaipur") ||
+      destLower.includes("udaipur") ||
+      destLower.includes("rajasthan") ||
+      destLower.includes("delhi") ||
+      destLower.includes("mumbai") ||
+      destLower.includes("goa") ||
+      destLower.includes("india")
+    ) {
+      const cityTitle = destLower.includes("jodhpur")
+        ? "Jodhpur"
+        : destLower.includes("jaipur")
+        ? "Jaipur"
+        : destLower.includes("udaipur")
+        ? "Udaipur"
+        : destLower.includes("goa")
+        ? "Goa"
+        : destLower.includes("mumbai")
+        ? "Mumbai"
+        : "Delhi";
+
+      const coords = destLower.includes("jodhpur")
+        ? { lat: 26.2808, lng: 73.0189 }
+        : destLower.includes("jaipur")
+        ? { lat: 26.9124, lng: 75.7873 }
+        : destLower.includes("udaipur")
+        ? { lat: 24.5764, lng: 73.6835 }
+        : destLower.includes("delhi")
+        ? { lat: 28.6139, lng: 77.2090 }
+        : { lat: 19.0760, lng: 72.8777 };
+
+      // Distinct, realistic rates per tier
+      const luxuryRate = Math.round(380 * multiplier * 100); // e.g. ~₹32,300/night
+      const boutiqueRate = Math.round(180 * multiplier * 100); // e.g. ~₹15,300/night
+      const balancedRate = Math.round(110 * multiplier * 100); // e.g. ~₹9,350/night
+      const comfortRate = Math.round(65 * multiplier * 100);  // e.g. ~₹5,525/night
+      const budgetRate = Math.round(30 * multiplier * 100);   // e.g. ~₹2,550/night
+
+      hotels = [
+        {
+          id: `htl_${cityTitle.toLowerCase()}_umaid_palace`,
+          name: destLower.includes("jodhpur") ? "Umaid Bhawan Palace" : `The Grand Palace & Spa ${cityTitle}`,
+          description: `5-star majestic heritage palace offering premier luxury, royal courtyards, signature dining, and heritage walks in ${cityTitle}`,
+          address: destLower.includes("jodhpur") ? "Circuit House Road, Jodhpur, Rajasthan" : `Palace Grounds, ${cityTitle}`,
+          coordinates: coords,
+          rating: 4.9,
+          stars: 5,
+          pricePerNight: { amount: luxuryRate, currency: query.currency.toUpperCase() },
+          totalPrice: { amount: luxuryRate * nights * query.rooms, currency: query.currency.toUpperCase() },
+          nights,
+          amenities: ["Signature Jiva Spa", "Royal Dining Pavilion", "Heated Palace Pool", "Heritage Concierge", "Butler Service"],
+          cancellationPolicy: "Free cancellation until 7 days before check-in",
+          hotelStyle: "luxury",
+          bookingUrl: "https://www.tajhotels.com",
+          fetchedAt: new Date().toISOString(),
+          provider: this.name,
+        },
+        {
+          id: `htl_${cityTitle.toLowerCase()}_boutique`,
+          name: destLower.includes("jodhpur") ? "RAAS Jodhpur - Heritage Boutique" : `${cityTitle} Heritage Haveli Boutique`,
+          description: `Chic designer boutique hotel nestled right beneath ancient forts, featuring restored 18th-century stone architecture and a tranquil pool`,
+          address: destLower.includes("jodhpur") ? "Tunwar ji ka Jhalra, Makrana Mohalla, Jodhpur" : `Old City Haveli Lane, ${cityTitle}`,
+          coordinates: coords,
+          rating: 4.7,
+          stars: 5,
+          pricePerNight: { amount: boutiqueRate, currency: query.currency.toUpperCase() },
+          totalPrice: { amount: boutiqueRate * nights * query.rooms, currency: query.currency.toUpperCase() },
+          nights,
+          amenities: ["Rooftop Fort-View Dining", "Stepwell Views", "Ayurvedic Spa", "Complimentary WiFi"],
+          cancellationPolicy: "Free cancellation until 48 hours before check-in",
+          hotelStyle: "luxury",
+          bookingUrl: "https://www.raashotels.com",
+          fetchedAt: new Date().toISOString(),
+          provider: this.name,
+        },
+        {
+          id: `htl_${cityTitle.toLowerCase()}_balanced`,
+          name: destLower.includes("jodhpur") ? "The Ajit Bhawan - Palace Resort" : `The Heritage Resort & Suites ${cityTitle}`,
+          description: `Warm traditional hospitality with lush landscaped gardens, courtyards, and well-appointed heritage rooms`,
+          address: destLower.includes("jodhpur") ? "Near Circuit House, Jodhpur" : `Central Civil Lines, ${cityTitle}`,
+          coordinates: coords,
+          rating: 4.6,
+          stars: 4,
+          pricePerNight: { amount: balancedRate, currency: query.currency.toUpperCase() },
+          totalPrice: { amount: balancedRate * nights * query.rooms, currency: query.currency.toUpperCase() },
+          nights,
+          amenities: ["Swimming Pool", "Multi-Cuisine Restaurant", "Free WiFi", "Travel Desk"],
+          cancellationPolicy: "Free cancellation until 48 hours before check-in",
+          hotelStyle: "balanced",
+          bookingUrl: "https://www.booking.com",
+          fetchedAt: new Date().toISOString(),
+          provider: this.name,
+        },
+        {
+          id: `htl_${cityTitle.toLowerCase()}_comfort`,
+          name: destLower.includes("jodhpur") ? "Mandore Heritage Guest House" : `${cityTitle} Central Comfort Stay`,
+          description: `Quiet and charming accommodation surrounded by green gardens, offering home-cooked authentic local cuisine`,
+          address: `Heritage District, ${cityTitle}`,
+          coordinates: coords,
+          rating: 4.4,
+          stars: 3,
+          pricePerNight: { amount: comfortRate, currency: query.currency.toUpperCase() },
+          totalPrice: { amount: comfortRate * nights * query.rooms, currency: query.currency.toUpperCase() },
+          nights,
+          amenities: ["Organic Garden Dining", "Free High-Speed WiFi", "Cooking Classes", "Airport Shuttle"],
+          cancellationPolicy: "Free cancellation up to 24 hours before check-in",
+          hotelStyle: "balanced",
+          bookingUrl: "https://www.booking.com",
+          fetchedAt: new Date().toISOString(),
+          provider: this.name,
+        },
+        {
+          id: `htl_${cityTitle.toLowerCase()}_budget`,
+          name: destLower.includes("jodhpur") ? "Zostel Jodhpur" : `Zostel & Social Hub ${cityTitle}`,
+          description: `Vibrant backpacker base with colorful rooftop lounge, sunset fort views, and modern clean dorms and private rooms`,
+          address: `Stepwell Square, ${cityTitle}`,
+          coordinates: coords,
+          rating: 4.5,
+          stars: 3,
+          pricePerNight: { amount: budgetRate, currency: query.currency.toUpperCase() },
+          totalPrice: { amount: budgetRate * nights * query.rooms, currency: query.currency.toUpperCase() },
+          nights,
+          amenities: ["Rooftop Cafe", "Co-working Space", "Free WiFi", "Walking Tours", "Game Lounge"],
+          cancellationPolicy: "Free cancellation up to 24 hours before check-in",
+          hotelStyle: "budget",
+          bookingUrl: "https://www.zostel.com",
+          fetchedAt: new Date().toISOString(),
+          provider: this.name,
+        },
+      ];
     } else {
       // Dynamic fallback for any other destination - never return Tokyo for an unrelated city
       const cleanDest = query.destination.trim() || "City Center";
+      const luxuryRate = Math.round(290 * multiplier * 100);
+      const boutiqueRate = Math.round(185 * multiplier * 100);
+      const balancedRate = Math.round(125 * multiplier * 100);
+      const comfortRate = Math.round(75 * multiplier * 100);
+      const budgetRate = Math.round(42 * multiplier * 100);
+
       hotels = [
         {
+          id: `htl_${cleanDest.toLowerCase().replace(/[^a-z0-9]/g, "_")}_luxury`,
+          name: `The Grand Palace Hotel ${cleanDest}`,
+          description: `5-star premier luxury hotel offering signature suites, spa sanctuaries, and fine dining in ${cleanDest}`,
+          address: `1 Promenade Avenue, ${cleanDest}`,
+          coordinates: query.coordinates ?? { lat: 0, lng: 0 },
+          rating: 4.8,
+          stars: 5,
+          pricePerNight: {
+            amount: luxuryRate,
+            currency: query.currency.toUpperCase(),
+          },
+          totalPrice: {
+            amount: luxuryRate * nights * query.rooms,
+            currency: query.currency.toUpperCase(),
+          },
+          nights,
+          amenities: ["Signature Spa", "Michelin-Caliber Dining", "Infinity Pool", "Butler Service"],
+          cancellationPolicy: "Free cancellation until 7 days before check-in",
+          hotelStyle: "luxury",
+          bookingUrl: "https://www.fourseasons.com",
+          fetchedAt: new Date().toISOString(),
+          provider: this.name,
+        },
+        {
+          id: `htl_${cleanDest.toLowerCase().replace(/[^a-z0-9]/g, "_")}_boutique`,
+          name: `${cleanDest} Heritage Boutique Suites`,
+          description: `Charming boutique lodging located within walking distance of prime cultural landmarks in ${cleanDest}`,
+          address: `14 Heritage Quarter, ${cleanDest}`,
+          coordinates: query.coordinates ?? { lat: 0, lng: 0 },
+          rating: 4.7,
+          stars: 4,
+          pricePerNight: {
+            amount: boutiqueRate,
+            currency: query.currency.toUpperCase(),
+          },
+          totalPrice: {
+            amount: boutiqueRate * nights * query.rooms,
+            currency: query.currency.toUpperCase(),
+          },
+          nights,
+          amenities: ["Rooftop Terrace", "Artisan Breakfast", "Free High-Speed WiFi", "Concierge Desk"],
+          cancellationPolicy: "Free cancellation until 48 hours before check-in",
+          hotelStyle: "luxury",
+          bookingUrl: "https://www.booking.com",
+          fetchedAt: new Date().toISOString(),
+          provider: this.name,
+        },
+        {
           id: `htl_${cleanDest.toLowerCase().replace(/[^a-z0-9]/g, "_")}_balanced`,
-          name: `The Heritage Hotel ${cleanDest}`,
+          name: `The City Center Hotel ${cleanDest}`,
           description: `Comfortable and centrally situated hotel in ${cleanDest} with modern traveler amenities`,
           address: `Central Promenade, ${cleanDest}`,
           coordinates: query.coordinates ?? { lat: 0, lng: 0 },
           rating: 4.5,
           stars: 4,
           pricePerNight: {
-            amount: balancedNightRate,
+            amount: balancedRate,
             currency: query.currency.toUpperCase(),
           },
           totalPrice: {
-            amount: balancedNightRate * nights * query.rooms,
+            amount: balancedRate * nights * query.rooms,
             currency: query.currency.toUpperCase(),
           },
           nights,
@@ -515,19 +700,43 @@ export class HotelsFixtureAdapter implements IHotelsProvider {
           provider: this.name,
         },
         {
+          id: `htl_${cleanDest.toLowerCase().replace(/[^a-z0-9]/g, "_")}_comfort`,
+          name: `${cleanDest} Riverside Comfort Inn`,
+          description: `Peaceful riverside base featuring comfortable rooms, quick transit access, and local breakfast`,
+          address: `88 Riverbank Way, ${cleanDest}`,
+          coordinates: query.coordinates ?? { lat: 0, lng: 0 },
+          rating: 4.3,
+          stars: 3,
+          pricePerNight: {
+            amount: comfortRate,
+            currency: query.currency.toUpperCase(),
+          },
+          totalPrice: {
+            amount: comfortRate * nights * query.rooms,
+            currency: query.currency.toUpperCase(),
+          },
+          nights,
+          amenities: ["River View Rooms", "Free WiFi", "Bicycle Rental", "Luggage Storage"],
+          cancellationPolicy: "Free cancellation until 24 hours before check-in",
+          hotelStyle: "balanced",
+          bookingUrl: "https://www.booking.com",
+          fetchedAt: new Date().toISOString(),
+          provider: this.name,
+        },
+        {
           id: `htl_${cleanDest.toLowerCase().replace(/[^a-z0-9]/g, "_")}_budget`,
-          name: `${cleanDest} Urban Pods & Hostel`,
+          name: `${cleanDest} Urban Pods & Social Hostel`,
           description: `Vibrant and affordable modern stay in ${cleanDest} close to main transit links`,
           address: `45 Station Quarter, ${cleanDest}`,
           coordinates: query.coordinates ?? { lat: 0, lng: 0 },
           rating: 4.4,
           stars: 3,
           pricePerNight: {
-            amount: budgetNightRate,
+            amount: budgetRate,
             currency: query.currency.toUpperCase(),
           },
           totalPrice: {
-            amount: budgetNightRate * nights * query.rooms,
+            amount: budgetRate * nights * query.rooms,
             currency: query.currency.toUpperCase(),
           },
           nights,
@@ -535,30 +744,6 @@ export class HotelsFixtureAdapter implements IHotelsProvider {
           cancellationPolicy: "Non-refundable after booking",
           hotelStyle: "budget",
           bookingUrl: "https://www.hostelworld.com",
-          fetchedAt: new Date().toISOString(),
-          provider: this.name,
-        },
-        {
-          id: `htl_${cleanDest.toLowerCase().replace(/[^a-z0-9]/g, "_")}_luxury`,
-          name: `The Royal Palace Hotel ${cleanDest}`,
-          description: `5-star premier luxury hotel offering signature suites, spa sanctuaries, and fine dining in ${cleanDest}`,
-          address: `1 Promenade Avenue, ${cleanDest}`,
-          coordinates: query.coordinates ?? { lat: 0, lng: 0 },
-          rating: 4.8,
-          stars: 5,
-          pricePerNight: {
-            amount: luxuryNightRate,
-            currency: query.currency.toUpperCase(),
-          },
-          totalPrice: {
-            amount: luxuryNightRate * nights * query.rooms,
-            currency: query.currency.toUpperCase(),
-          },
-          nights,
-          amenities: ["Signature Spa", "Michelin-Caliber Dining", "Infinity Pool", "Butler Service"],
-          cancellationPolicy: "Free cancellation until 7 days before check-in",
-          hotelStyle: "luxury",
-          bookingUrl: "https://www.fourseasons.com",
           fetchedAt: new Date().toISOString(),
           provider: this.name,
         },

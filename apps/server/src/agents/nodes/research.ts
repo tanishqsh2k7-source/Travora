@@ -17,12 +17,15 @@ export async function researchNode(state: TravelState): Promise<TravelStateUpdat
   });
 
   // 2. Search flights
+  const totalPassengers = Math.max(1, (req.travellers.adults || 1) + (req.travellers.children || 0));
+  const rooms = Math.max(1, Math.ceil(totalPassengers / 2));
+
   const flightsResult = await providers.flights.searchFlights({
     origin: req.origin,
     destination: req.destination,
     departureDate: req.startDate,
     returnDate: req.endDate,
-    adults: req.travellers.adults,
+    adults: totalPassengers,
     currency: req.budget.currency,
   });
 
@@ -31,8 +34,8 @@ export async function researchNode(state: TravelState): Promise<TravelStateUpdat
     destination: req.destination,
     checkInDate: req.startDate,
     checkOutDate: req.endDate,
-    adults: req.travellers.adults,
-    rooms: 1,
+    adults: totalPassengers,
+    rooms,
     travelStyle: req.travelStyle,
     currency: req.budget.currency,
   });

@@ -14,29 +14,30 @@ import { BudgetView } from "./components/BudgetView";
 import { MapStopList } from "./components/MapStopList";
 import { ReplanModal } from "./components/ReplanModal";
 import { PreferencesModal } from "./components/PreferencesModal";
-import { VersionHistoryView } from "./components/VersionHistoryView";
+import { AuthModal } from "./components/AuthModal";
 import {
   ensureAuth,
+  fetchCurrentUser,
+  logoutUser,
   createTrip,
   getTrip,
   startPlanning,
   startReplanning,
   subscribeToRunEvents,
   type TripResponse,
-  type TripVersionDetail,
 } from "./api/client";
+import type { AuthUser } from "@travora/contracts";
 import {
   SparklesIcon,
   CalendarIcon,
   CurrencyIcon,
   MapPinIcon,
-  RefreshIcon,
 } from "./components/Icons";
 import { SAMPLE_MULTICITY_ITINERARY } from "./fixtures/sample-multicity";
 import "./styles/app.css";
 
 type AppView = "builder" | "planning" | "view";
-type PlanTab = "itinerary" | "budget" | "map" | "versions" | "terminal";
+type PlanTab = "itinerary" | "budget" | "map";
 
 export function App() {
   const [currentView, setCurrentView] = useState<AppView>("builder");
@@ -55,13 +56,25 @@ export function App() {
 
   const [isReplanModalOpen, setIsReplanModalOpen] = useState(false);
   const [isPreferencesModalOpen, setIsPreferencesModalOpen] = useState(false);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Initialize auth and check for /sample route
+  // Initialize auth and check for user session / sample route
   useEffect(() => {
-    ensureAuth().catch((err) => {
-      console.warn("Auth initialization note:", err);
-    });
+    fetchCurrentUser()
+      .then((user) => {
+        if (user) {
+          setCurrentUser(user);
+        } else {
+          ensureAuth().catch((err) => {
+            console.warn("Auth initialization note:", err);
+          });
+        }
+      })
+      .catch(() => {
+        ensureAuth().catch(() => {});
+      });
 
     const isSample =
       window.location.pathname === "/sample" ||
@@ -242,25 +255,18 @@ export function App() {
     }
   };
 
-  const handleVersionRestored = (versionDetail: TripVersionDetail) => {
-    if (versionDetail.itineraryData) {
-      setPlanResult(versionDetail.itineraryData as FinalPlanResponse);
-    }
-    if (activeTrip) {
-      setActiveTrip({
-        ...activeTrip,
-        currentVersionNo: versionDetail.versionNo,
-      });
-    }
-    setActiveTab("itinerary");
-  };
-
   return (
     <div className="app-container">
       <Navbar
         onNewTrip={() => setCurrentView("builder")}
         hasActiveTrip={currentView !== "builder" && planResult !== null}
         onOpenPreferences={() => setIsPreferencesModalOpen(true)}
+        currentUser={currentUser}
+        onOpenAuth={() => setIsAuthModalOpen(true)}
+        onLogout={() => {
+          logoutUser();
+          setCurrentUser(null);
+        }}
       />
 
       <main className="main-content">
@@ -309,52 +315,38 @@ export function App() {
 
         {currentView === "view" && planResult && activeTrip && (
           <div className="plan-view-container">
-            {/* View navigation bar */}
-            <div className="plan-tabs-bar">
-              <div className="tabs-group">
+            {/* View navigation bar for V1 itineraries, or top action bar for V2 */}
+            {!planResult.itineraryV2 && (
+              <div className="plan-tabs-bar">
+                <div className="tabs-group">
+                  <button
+                    className={`plan-tab-btn ${activeTab === "itinerary" ? "active" : ""}`}
+                    onClick={() => setActiveTab("itinerary")}
+                  >
+                    <CalendarIcon className="w-4 h-4" /> Day-by-Day Itinerary
+                  </button>
+                  <button
+                    className={`plan-tab-btn ${activeTab === "budget" ? "active" : ""}`}
+                    onClick={() => setActiveTab("budget")}
+                  >
+                    <CurrencyIcon className="w-4 h-4" /> Budget Breakdown
+                  </button>
+                  <button
+                    className={`plan-tab-btn ${activeTab === "map" ? "active" : ""}`}
+                    onClick={() => setActiveTab("map")}
+                  >
+                    <MapPinIcon className="w-4 h-4" /> Route & Stops
+                  </button>
+                </div>
+
                 <button
-                  className={`plan-tab-btn ${activeTab === "itinerary" ? "active" : ""}`}
-                  onClick={() => setActiveTab("itinerary")}
+                  className="btn btn-secondary btn-sm"
+                  onClick={() => setIsReplanModalOpen(true)}
                 >
-                  <CalendarIcon className="w-4 h-4" /> {planResult.itineraryV2 ? "Itinerary Journey" : "Day-by-Day Itinerary"}
-                </button>
-                {!planResult.itineraryV2 && (
-                  <>
-                    <button
-                      className={`plan-tab-btn ${activeTab === "budget" ? "active" : ""}`}
-                      onClick={() => setActiveTab("budget")}
-                    >
-                      <CurrencyIcon className="w-4 h-4" /> Budget Breakdown
-                    </button>
-                    <button
-                      className={`plan-tab-btn ${activeTab === "map" ? "active" : ""}`}
-                      onClick={() => setActiveTab("map")}
-                    >
-                      <MapPinIcon className="w-4 h-4" /> Route & Stops
-                    </button>
-                  </>
-                )}
-                <button
-                  className={`plan-tab-btn ${activeTab === "versions" ? "active" : ""}`}
-                  onClick={() => setActiveTab("versions")}
-                >
-                  <RefreshIcon className="w-4 h-4" /> Version Lineage (v{activeTrip.currentVersionNo})
-                </button>
-                <button
-                  className={`plan-tab-btn ${activeTab === "terminal" ? "active" : ""}`}
-                  onClick={() => setActiveTab("terminal")}
-                >
-                  <SparklesIcon className="w-4 h-4" /> Agent Event Log ({events.length})
+                  <SparklesIcon className="w-4 h-4 text-terracotta" /> Refine / Replan
                 </button>
               </div>
-
-              <button
-                className="btn btn-secondary btn-sm"
-                onClick={() => setIsReplanModalOpen(true)}
-              >
-                <SparklesIcon className="w-4 h-4 text-indigo" /> Refine / Replan
-              </button>
-            </div>
+            )}
 
             {/* Tab Panels */}
             {activeTab === "itinerary" && (
@@ -364,44 +356,12 @@ export function App() {
               />
             )}
 
-            {activeTab === "budget" && (
+            {activeTab === "budget" && !planResult.itineraryV2 && (
               <BudgetView budget={planResult.budgetBreakdown} />
             )}
 
-            {activeTab === "map" && (
+            {activeTab === "map" && !planResult.itineraryV2 && (
               <MapStopList days={planResult.itinerary} />
-            )}
-
-            {activeTab === "versions" && (
-              <VersionHistoryView
-                tripId={activeTrip.id}
-                currentVersionNo={activeTrip.currentVersionNo}
-                onVersionRestored={handleVersionRestored}
-              />
-            )}
-
-            {activeTab === "terminal" && (
-              <div className="agent-terminal">
-                <div className="terminal-header">
-                  <div className="terminal-dots">
-                    <span className="dot dot-red"></span>
-                    <span className="dot dot-yellow"></span>
-                    <span className="dot dot-green"></span>
-                  </div>
-                  <span className="terminal-title">Agent Execution Log</span>
-                  <span className="terminal-count">{events.length} events logged</span>
-                </div>
-                <div className="terminal-body">
-                  {events.map((evt) => (
-                    <div key={evt.id} className="log-row">
-                      <span className="log-time">[{new Date(evt.timestamp).toLocaleTimeString()}]</span>
-                      <span className="log-badge badge-indigo">{evt.type}</span>
-                      <span className="log-stage">@{evt.stage}:</span>
-                      <span className="log-msg">{evt.message}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
             )}
           </div>
         )}
@@ -419,6 +379,15 @@ export function App() {
       <PreferencesModal
         isOpen={isPreferencesModalOpen}
         onClose={() => setIsPreferencesModalOpen(false)}
+      />
+
+      {/* Sign In & Register Modal */}
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        onAuthSuccess={(user) => {
+          setCurrentUser(user);
+        }}
       />
     </div>
   );

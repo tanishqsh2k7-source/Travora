@@ -262,12 +262,16 @@ export function DayByDayTimeline({ days, stays, currency }: DayByDayTimelineProp
                                   <strong className="event-name">{ev.title}</strong>
                                 </div>
 
-                                {ev.cost && ev.cost.amount > 0 && (
+                                {ev.cost && ev.cost.amount > 0 ? (
                                   <div className="event-cost-pill">
-                                    <DollarSign className="w-3 h-3 inline text-emerald" />
+                                    <span className="cost-ticket-tag">🎟️ Entry</span>
                                     <span>{formatCost(ev.cost.amount)}</span>
                                   </div>
-                                )}
+                                ) : ev.type === "activity" ? (
+                                  <div className="event-cost-pill free">
+                                    <span>Free Entry</span>
+                                  </div>
+                                ) : null}
                               </div>
 
                               {ev.place && (
@@ -278,7 +282,11 @@ export function DayByDayTimeline({ days, stays, currency }: DayByDayTimelineProp
                                 </div>
                               )}
 
-                              {ev.notes && <p className="event-notes-text">{ev.notes}</p>}
+                              {ev.notes && (
+                                <p className="event-notes-text">
+                                  {ev.notes.replace(/•?\s*hours unchecked/gi, "").trim()}
+                                </p>
+                              )}
                             </div>
                           </div>
                         </div>
@@ -299,8 +307,14 @@ export function DayByDayTimeline({ days, stays, currency }: DayByDayTimelineProp
                     </div>
 
                     <div className="footer-right">
-                      <span className="day-cost-label">Estimated Day Expenses:</span>
-                      <strong className="day-cost-val">{formatCost(day.dayCost.amount)}</strong>
+                      {day.dayCost && day.dayCost.amount > 0 ? (
+                        <>
+                          <span className="day-cost-label">Est. Day Expenses:</span>
+                          <strong className="day-cost-val">{formatCost(day.dayCost.amount)}</strong>
+                        </>
+                      ) : (
+                        <span className="day-cost-label text-emerald">Free sightseeing day</span>
+                      )}
                     </div>
                   </div>
                 </div>

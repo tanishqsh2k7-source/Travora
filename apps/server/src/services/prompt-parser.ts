@@ -192,8 +192,17 @@ Output ONLY valid JSON.`;
     durationDays = 3;
   }
 
-  // 5. Budget
-  let budgetAmount = targetCurrency === "INR" ? 150000 : 2000;
+  // 5. Travel Style & Interests
+  let travelStyle: TravelStyle = "balanced";
+  if (lower.includes("luxury") || lower.includes("5 star") || lower.includes("premium")) {
+    travelStyle = "luxury";
+  } else if (lower.includes("budget") || lower.includes("backpack") || lower.includes("cheap")) {
+    travelStyle = "budget";
+  } else if (lower.includes("relaxed") || lower.includes("slow") || lower.includes("chill")) {
+    travelStyle = "relaxed";
+  }
+
+  // 6. Currency & Budget (dynamic scaling when not specified)
   if (lower.includes("inr") || lower.includes("rs") || lower.includes("₹")) {
     targetCurrency = "INR";
   } else if (lower.includes("eur") || lower.includes("€") || lower.includes("euros")) {
@@ -205,19 +214,23 @@ Output ONLY valid JSON.`;
   }
 
   const budgetNumMatch = lower.match(/(?:\$|€|£|₹|rs\.?|budget\s*(?:of)?\s*)(\d[\d,]*)/i);
+  let budgetAmount: number;
+
   if (budgetNumMatch) {
     const rawNum = parseInt(budgetNumMatch[1].replace(/,/g, ""), 10);
-    if (rawNum > 0) budgetAmount = rawNum;
-  }
-
-  // 6. Travel Style & Interests
-  let travelStyle: TravelStyle = "balanced";
-  if (lower.includes("luxury") || lower.includes("5 star") || lower.includes("premium")) {
-    travelStyle = "luxury";
-  } else if (lower.includes("budget") || lower.includes("backpack") || lower.includes("cheap")) {
-    travelStyle = "budget";
-  } else if (lower.includes("relaxed") || lower.includes("slow") || lower.includes("chill")) {
-    travelStyle = "relaxed";
+    budgetAmount = rawNum > 0 ? rawNum : 150000;
+  } else {
+    // Dynamic estimate based on travelers, duration, and style when budget is not provided
+    const totalTravelers = Math.max(1, adults + children);
+    if (targetCurrency === "INR") {
+      const perPersonDaily = travelStyle === "luxury" ? 16000 : travelStyle === "budget" ? 3500 : 7500;
+      const flightPerPerson = travelStyle === "luxury" ? 20000 : travelStyle === "budget" ? 7000 : 12000;
+      budgetAmount = (perPersonDaily * durationDays + flightPerPerson) * totalTravelers;
+    } else {
+      const perPersonDaily = travelStyle === "luxury" ? 420 : travelStyle === "budget" ? 110 : 220;
+      const flightPerPerson = travelStyle === "luxury" ? 850 : travelStyle === "budget" ? 320 : 550;
+      budgetAmount = (perPersonDaily * durationDays + flightPerPerson) * totalTravelers;
+    }
   }
 
   const interests: string[] = [];

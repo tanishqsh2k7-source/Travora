@@ -86,10 +86,7 @@ const CURRENCIES = ["USD", "EUR", "GBP", "INR", "JPY", "CAD", "AUD", "CHF", "SGD
 const STORAGE_KEY = "travora_planner_draft";
 
 export function TripBuilder({ onSubmit, isLoading }: TripBuilderProps) {
-  // Tab state: "details" | "prompt"
   const [activeTab, setActiveTab] = useState<"details" | "prompt">("details");
-
-  // Tab 1 fields
   const [origin, setOrigin] = useState("London, UK");
   const [destination, setDestination] = useState("Lisbon, Portugal");
   const [startDate, setStartDate] = useState("2027-05-10");
@@ -99,8 +96,6 @@ export function TripBuilder({ onSubmit, isLoading }: TripBuilderProps) {
     children: 0,
     rooms: 1,
   });
-
-  // More options disclosure
   const [isMoreOptionsOpen, setIsMoreOptionsOpen] = useState(false);
   const [currency, setCurrency] = useState(() => {
     try {
@@ -121,20 +116,15 @@ export function TripBuilder({ onSubmit, isLoading }: TripBuilderProps) {
     "history",
   ]);
   const [dietary, setDietary] = useState("");
-
-  // Tab 2 fields
   const [promptText, setPromptText] = useState("");
   const [isParsingPrompt, setIsParsingPrompt] = useState(false);
   const [promptFeedback, setPromptFeedback] = useState<string | null>(null);
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
-
-  // Validation errors
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [summaryError, setSummaryError] = useState<string | null>(null);
 
   const plannerCardRef = useRef<HTMLDivElement>(null);
 
-  // Rotate prompt placeholder
   useEffect(() => {
     const timer = setInterval(() => {
       setPlaceholderIndex((prev) => (prev + 1) % ROTATING_PLACEHOLDERS.length);
@@ -142,7 +132,6 @@ export function TripBuilder({ onSubmit, isLoading }: TripBuilderProps) {
     return () => clearInterval(timer);
   }, []);
 
-  // Restore draft from sessionStorage
   useEffect(() => {
     try {
       const saved = sessionStorage.getItem(STORAGE_KEY);
@@ -161,11 +150,9 @@ export function TripBuilder({ onSubmit, isLoading }: TripBuilderProps) {
         if (parsed.dietary) setDietary(parsed.dietary);
       }
     } catch {
-      // sessionStorage unavailable
     }
   }, []);
 
-  // Autosave draft to sessionStorage
   useEffect(() => {
     try {
       const draft = {
@@ -183,7 +170,6 @@ export function TripBuilder({ onSubmit, isLoading }: TripBuilderProps) {
       };
       sessionStorage.setItem(STORAGE_KEY, JSON.stringify(draft));
     } catch {
-      // ignore
     }
   }, [
     origin,
@@ -199,7 +185,6 @@ export function TripBuilder({ onSubmit, isLoading }: TripBuilderProps) {
     dietary,
   ]);
 
-  // Fetch backend preferences if available
   useEffect(() => {
     getPreferences()
       .then((pref) => {
@@ -221,7 +206,6 @@ export function TripBuilder({ onSubmit, isLoading }: TripBuilderProps) {
     try {
       localStorage.setItem("travora_currency", newCurr);
     } catch {
-      // ignore
     }
   };
 
@@ -478,29 +462,28 @@ export function TripBuilder({ onSubmit, isLoading }: TripBuilderProps) {
                 </div>
 
                 {/* 3. Dates */}
-                <div className="planner-bar-segment date-segment">
-                  <DateRangePicker
-                    startDate={startDate}
-                    endDate={endDate}
-                    onChange={(start, end) => {
-                      setStartDate(start);
-                      setEndDate(end);
-                      if (errors.startDate || errors.endDate) {
-                        setErrors((prev) => ({ ...prev, startDate: "", endDate: "" }));
-                      }
-                    }}
-                    label="Dates"
-                    error={errors.endDate || errors.startDate}
-                  />
-                </div>
+                <DateRangePicker
+                  className="planner-bar-segment date-segment"
+                  startDate={startDate}
+                  endDate={endDate}
+                  onChange={(start, end) => {
+                    setStartDate(start);
+                    setEndDate(end);
+                    if (errors.startDate || errors.endDate) {
+                      setErrors((prev) => ({ ...prev, startDate: "", endDate: "" }));
+                    }
+                  }}
+                  destination={destination}
+                  label="Dates"
+                  error={errors.endDate || errors.startDate}
+                />
 
                 {/* 4. Travellers */}
-                <div className="planner-bar-segment travellers-segment">
-                  <TravellerPopover
-                    value={travellers}
-                    onChange={(t) => setTravellers(t)}
-                  />
-                </div>
+                <TravellerPopover
+                  className="planner-bar-segment travellers-segment"
+                  value={travellers}
+                  onChange={(t) => setTravellers(t)}
+                />
               </div>
 
               {/* More options disclosure toggle */}

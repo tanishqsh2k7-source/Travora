@@ -18,23 +18,39 @@ interface TravellerPopoverProps {
 export function TravellerPopover({ value, onChange, className = "" }: TravellerPopoverProps) {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const dialogId = React.useId();
 
   const adults = value.adults || 1;
   const children = value.children || 0;
   const total = adults + children;
   const rooms = value.rooms ?? Math.max(1, Math.ceil(total / 2));
 
+  const handleClose = React.useCallback(() => {
+    setIsOpen(false);
+    triggerRef.current?.focus();
+  }, []);
+
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setIsOpen(false);
+        handleClose();
+      }
+    }
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        handleClose();
       }
     }
     if (isOpen) {
       document.addEventListener("mousedown", handleClickOutside);
-      return () => document.removeEventListener("mousedown", handleClickOutside);
+      document.addEventListener("keydown", handleKeyDown);
+      return () => {
+        document.removeEventListener("mousedown", handleClickOutside);
+        document.removeEventListener("keydown", handleKeyDown);
+      };
     }
-  }, [isOpen]);
+  }, [isOpen, handleClose]);
 
   const handleAdultsChange = (nextAdults: number) => {
     onChange({
@@ -78,20 +94,22 @@ export function TravellerPopover({ value, onChange, className = "" }: TravellerP
       <label className="field-label">Travellers & Rooms</label>
       <button
         type="button"
+        ref={triggerRef}
         className={`traveller-trigger-btn ${isOpen ? "open" : ""}`}
         onClick={() => setIsOpen(!isOpen)}
         aria-haspopup="dialog"
         aria-expanded={isOpen}
+        aria-controls={dialogId}
       >
-        <span className="trigger-icon-wrap">
+        <span className="trigger-icon-wrap" aria-hidden="true">
           <Users className="w-4 h-4 text-ink-muted" />
         </span>
         <span className="trigger-text">{summary}</span>
-        <ChevronDown className={`w-4 h-4 text-ink-muted chevron ${isOpen ? "rotate" : ""}`} />
+        <ChevronDown className={`w-4 h-4 text-ink-muted chevron ${isOpen ? "rotate" : ""}`} aria-hidden="true" />
       </button>
 
       {isOpen && (
-        <div className="traveller-dropdown-panel" role="dialog" aria-label="Choose travellers">
+        <div id={dialogId} className="traveller-dropdown-panel" role="dialog" aria-label="Choose travellers">
           <div className="traveller-stepper-row">
             <div>
               <div className="traveller-row-title">Adults</div>
@@ -161,7 +179,7 @@ export function TravellerPopover({ value, onChange, className = "" }: TravellerP
           <button
             type="button"
             className="traveller-done-btn"
-            onClick={() => setIsOpen(false)}
+            onClick={handleClose}
           >
             Done
           </button>

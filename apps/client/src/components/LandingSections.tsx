@@ -1,7 +1,6 @@
-import React, { useState } from "react";
+import React from "react";
 import { DESTINATIONS, type Destination } from "../content/destinations.js";
 import { Photo } from "./Photo.js";
-import { BehindTheScenesModal } from "./BehindTheScenesModal.js";
 import {
   Utensils,
   Landmark,
@@ -41,8 +40,6 @@ export function LandingSections({
   onApplyTheme,
   onOpenSampleTrip,
 }: LandingSectionsProps) {
-  const [isBehindTheScenesOpen, setIsBehindTheScenesOpen] = useState(false);
-
   const THEMES: ThemePreset[] = [
     {
       id: "food",
@@ -222,26 +219,19 @@ export function LandingSections({
 
             <div className="step-card">
               <div className="step-number">2</div>
-              <h3 className="step-title">We check flights, stays, weather and routes</h3>
+              <h3 className="step-title">Smart routing & hand-picked stays</h3>
               <p className="step-description">
-                Our planning system queries live schedules, groups stops efficiently to avoid backtracking,
-                and balances your daily pace.
+                We check optimal transit connections, select neighborhood lodging, avoid backtracking,
+                and balance your daily pace for an effortless journey.
               </p>
-              <button
-                type="button"
-                className="behind-scenes-link"
-                onClick={() => setIsBehindTheScenesOpen(true)}
-              >
-                See what happens behind the scenes →
-              </button>
             </div>
 
             <div className="step-card">
               <div className="step-number">3</div>
-              <h3 className="step-title">You get a plan you can follow, day by day</h3>
+              <h3 className="step-title">Your complete day-by-day itinerary</h3>
               <p className="step-description">
-                Get hour-by-hour schedules, verified transit times, hotel check-in details, and
-                automatic rainy-day alternatives if weather changes.
+                Receive a clear schedule with walking times, hotel check-in points, verified costs, and
+                weather-smart indoor alternatives when rain is forecast.
               </p>
             </div>
           </div>
@@ -285,22 +275,22 @@ export function LandingSections({
             <div className="trust-item">
               <Shield className="w-5 h-5 text-forest" />
               <div>
-                <strong>Reliable math</strong>
-                <p>Budgets and travel durations computed deterministically, never guessed.</p>
+                <strong>Transparent pricing</strong>
+                <p>Real-world cost breakdowns with built-in safety buffers so there are no surprises.</p>
               </div>
             </div>
             <div className="trust-item">
               <CheckCircle2 className="w-5 h-5 text-teal" />
               <div>
-                <strong>Weather aware</strong>
-                <p>Monitors rain probabilities and shifts outdoor stops to covered venues.</p>
+                <strong>Weather-smart planning</strong>
+                <p>Balances open-air sights with indoor cultural alternatives when rain is forecast.</p>
               </div>
             </div>
             <div className="trust-item">
               <Clock className="w-5 h-5 text-terracotta" />
               <div>
-                <strong>Multi-hotel logistics</strong>
-                <p>Notifies you when your journey requires switching hotels between cities.</p>
+                <strong>Effortless hotel logistics</strong>
+                <p>Clear check-in, check-out, and luggage transit times whenever your route moves between bases.</p>
               </div>
             </div>
           </div>
@@ -314,21 +304,15 @@ export function LandingSections({
             </div>
             <div className="footer-meta-side">
               <span className="demo-data-badge">
-                Curated Travel Engine
+                Curated Travel Experience
               </span>
               <p className="footer-disclaimer">
-                Flights, hotels, and attractions are queried from distribution networks and verified travel caches.
+                Handcrafted recommendations, real-world transit schedules, and verified neighborhood stays.
               </p>
             </div>
           </div>
         </div>
       </footer>
-
-      {/* Behind the scenes technical modal */}
-      <BehindTheScenesModal
-        isOpen={isBehindTheScenesOpen}
-        onClose={() => setIsBehindTheScenesOpen(false)}
-      />
     </div>
   );
 }

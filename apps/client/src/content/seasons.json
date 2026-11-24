@@ -1,0 +1,138 @@
+{
+  "lisbon": {
+    "reviewed": false,
+    "months": {
+      "1": "quiet",
+      "2": "quiet",
+      "3": "shoulder",
+      "4": "shoulder",
+      "5": "shoulder",
+      "6": "peak",
+      "7": "peak",
+      "8": "peak",
+      "9": "peak",
+      "10": "shoulder",
+      "11": "quiet",
+      "12": "quiet"
+    }
+  },
+  "tokyo": {
+    "reviewed": false,
+    "months": {
+      "1": "quiet",
+      "2": "quiet",
+      "3": "peak",
+      "4": "peak",
+      "5": "shoulder",
+      "6": "shoulder",
+      "7": "peak",
+      "8": "peak",
+      "9": "shoulder",
+      "10": "shoulder",
+      "11": "peak",
+      "12": "quiet"
+    }
+  },
+  "paris": {
+    "reviewed": false,
+    "months": {
+      "1": "quiet",
+      "2": "quiet",
+      "3": "shoulder",
+      "4": "shoulder",
+      "5": "peak",
+      "6": "peak",
+      "7": "peak",
+      "8": "peak",
+      "9": "shoulder",
+      "10": "shoulder",
+      "11": "quiet",
+      "12": "quiet"
+    }
+  },
+  "udaipur": {
+    "reviewed": false,
+    "months": {
+      "1": "peak",
+      "2": "peak",
+      "3": "shoulder",
+      "4": "quiet",
+      "5": "quiet",
+      "6": "quiet",
+      "7": "shoulder",
+      "8": "shoulder",
+      "9": "shoulder",
+      "10": "peak",
+      "11": "peak",
+      "12": "peak"
+    }
+  },
+  "jodhpur": {
+    "reviewed": false,
+    "months": {
+      "1": "peak",
+      "2": "peak",
+      "3": "shoulder",
+      "4": "quiet",
+      "5": "quiet",
+      "6": "quiet",
+      "7": "quiet",
+      "8": "shoulder",
+      "9": "shoulder",
+      "10": "peak",
+      "11": "peak",
+      "12": "peak"
+    }
+  },
+  "kyoto": {
+    "reviewed": false,
+    "months": {
+      "1": "quiet",
+      "2": "quiet",
+      "3": "peak",
+      "4": "peak",
+      "5": "shoulder",
+      "6": "shoulder",
+      "7": "shoulder",
+      "8": "shoulder",
+      "9": "shoulder",
+      "10": "shoulder",
+      "11": "peak",
+      "12": "quiet"
+    }
+  },
+  "rome": {
+    "reviewed": false,
+    "months": {
+      "1": "quiet",
+      "2": "quiet",
+      "3": "shoulder",
+      "4": "shoulder",
+      "5": "peak",
+      "6": "peak",
+      "7": "peak",
+      "8": "peak",
+      "9": "peak",
+      "10": "shoulder",
+      "11": "quiet",
+      "12": "quiet"
+    }
+  },
+  "edinburgh": {
+    "reviewed": false,
+    "months": {
+      "1": "quiet",
+      "2": "quiet",
+      "3": "quiet",
+      "4": "shoulder",
+      "5": "shoulder",
+      "6": "peak",
+      "7": "peak",
+      "8": "peak",
+      "9": "shoulder",
+      "10": "shoulder",
+      "11": "quiet",
+      "12": "shoulder"
+    }
+  }
+}

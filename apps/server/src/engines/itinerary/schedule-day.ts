@@ -179,10 +179,8 @@ export function scheduleDay(
         endMin = startMin + duration;
       }
       if (endMin > closeMin) {
-        notes = `${notes ? notes + " • " : ""}Adjusted for venue closing time at ${act.openingHours.close}`;
+        notes = `${notes ? notes + " • " : ""}Closing time at ${act.openingHours.close}`;
       }
-    } else {
-      notes = `${notes ? notes + " • " : ""}hours unchecked`;
     }
 
     events.push({

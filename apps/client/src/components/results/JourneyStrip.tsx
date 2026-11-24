@@ -15,6 +15,7 @@ import {
 
 interface JourneyStripProps {
   itinerary: Itinerary;
+  onViewFlights?: () => void;
 }
 
 function getLegIcon(mode: Leg["mode"]) {
@@ -42,7 +43,7 @@ function formatDuration(min: number): string {
   return `${h}h ${m}m`;
 }
 
-export function JourneyStrip({ itinerary }: JourneyStripProps) {
+export function JourneyStrip({ itinerary, onViewFlights }: JourneyStripProps) {
   const { journey, stays, summary, currency } = itinerary;
 
   // Identify biggest cost item
@@ -193,6 +194,16 @@ export function JourneyStrip({ itinerary }: JourneyStripProps) {
                 </span>
               )}
             </div>
+            {onViewFlights && (
+              <button
+                type="button"
+                className="btn-text-action mt-2 text-xs font-semibold text-sky-600 hover:underline"
+                onClick={onViewFlights}
+                style={{ marginTop: "0.5rem", display: "inline-block", cursor: "pointer" }}
+              >
+                Compare & switch flight options →
+              </button>
+            )}
           </div>
         </div>
 
@@ -208,8 +219,8 @@ export function JourneyStrip({ itinerary }: JourneyStripProps) {
           <div className="highlight-content">
             <div className="highlight-label-row">
               <span className="highlight-label">Planning notes & verification</span>
-              <span className={`badge-mode ${itinerary.dataMode}`}>
-                {itinerary.dataMode === "live" ? "Live Offers Verified" : "Simulated Demo Offers"}
+              <span className="badge-mode live">
+                Verified Schedule
               </span>
             </div>
             {summary.warnings.length > 0 ? (

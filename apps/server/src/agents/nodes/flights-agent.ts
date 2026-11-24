@@ -16,12 +16,13 @@ export async function flightsAgentNode(state: TravelState): Promise<TravelStateU
   const warnings: string[] = [];
 
   try {
+    const totalPassengers = Math.max(1, (req.travellers.adults || 1) + (req.travellers.children || 0));
     const flightsResult = await providers.flights.searchFlights({
       origin: req.origin,
       destination: req.destination,
       departureDate: req.startDate,
       returnDate: req.endDate,
-      adults: req.travellers.adults,
+      adults: totalPassengers,
       currency: req.budget.currency,
     });
 

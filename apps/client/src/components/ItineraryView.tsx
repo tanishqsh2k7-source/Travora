@@ -5,14 +5,17 @@ import { JourneyStrip } from "./results/JourneyStrip";
 import { StaysTimeline } from "./results/StaysTimeline";
 import { DayByDayTimeline } from "./results/DayByDayTimeline";
 import { RouteMap } from "./results/RouteMap";
+import { FlightOptionsView } from "./results/FlightOptionsView";
+import { HotelOptionsView } from "./results/HotelOptionsView";
 import { BudgetView } from "./BudgetView";
 import "../styles/itinerary-v2.css";
+import type { FlightOffer, HotelOffer } from "@travora/contracts";
 import {
   Compass,
   Calendar,
   Bed,
   MapPin,
-  DollarSign,
+  Wallet,
   Clock,
   Sun,
   CloudRain,
@@ -32,21 +35,31 @@ interface ItineraryViewProps {
   onOpenReplanModal: () => void;
 }
 
-type ItineraryTab = "overview" | "day-by-day" | "stays" | "map" | "budget";
+type ItineraryTab = "overview" | "day-by-day" | "stays" | "flights" | "hotels" | "map" | "budget";
 
 export function ItineraryView({ plan, onOpenReplanModal }: ItineraryViewProps) {
   // Check if we have Itinerary V2
   const itineraryV2 = plan.itineraryV2;
 
+  // Selected Flight State
+  const [selectedFlightOffer, setSelectedFlightOffer] = useState<FlightOffer | undefined>(
+    () => plan.flightOptions?.[0]
+  );
+
+  // Selected Hotel State
+  const [selectedHotelOffer, setSelectedHotelOffer] = useState<HotelOffer | undefined>(
+    () => plan.hotelOptions?.[0]
+  );
+
   // URL-synced tab state
   const [activeTab, setActiveTab] = useState<ItineraryTab>(() => {
     const hash = window.location.hash.replace("#", "") as ItineraryTab;
-    if (["overview", "day-by-day", "stays", "map", "budget"].includes(hash)) {
+    if (["overview", "day-by-day", "stays", "flights", "hotels", "map", "budget"].includes(hash)) {
       return hash;
     }
     const params = new URLSearchParams(window.location.search);
     const tabParam = params.get("tab") as ItineraryTab;
-    if (["overview", "day-by-day", "stays", "map", "budget"].includes(tabParam)) {
+    if (["overview", "day-by-day", "stays", "flights", "hotels", "map", "budget"].includes(tabParam)) {
       return tabParam;
     }
     return "overview";
@@ -62,13 +75,89 @@ export function ItineraryView({ plan, onOpenReplanModal }: ItineraryViewProps) {
   useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash.replace("#", "") as ItineraryTab;
-      if (["overview", "day-by-day", "stays", "map", "budget"].includes(hash)) {
+      if (["overview", "day-by-day", "stays", "flights", "hotels", "map", "budget"].includes(hash)) {
         setActiveTab(hash);
       }
     };
     window.addEventListener("hashchange", handleHashChange);
     return () => window.removeEventListener("hashchange", handleHashChange);
   }, []);
+
+  const handleSelectFlight = (flight: FlightOffer) => {
+    setSelectedFlightOffer(flight);
+    if (itineraryV2 && itineraryV2.journey.length > 0) {
+      const isRoundTrip = itineraryV2.journey.some((l) => l.kind === "return");
+      const outboundAmount = isRoundTrip ? Math.round(flight.price.amount * 0.52) : flight.price.amount;
+      const returnAmount = flight.price.amount - outboundAmount;
+
+      const outboundLeg = itineraryV2.journey.find((l) => l.kind === "outbound") || itineraryV2.journey[0];
+      if (outboundLeg) {
+        outboundLeg.carrier = flight.carrierName;
+        outboundLeg.number = flight.segments[0]?.flightNumber || flight.carrier;
+        outboundLeg.durationMin = flight.totalDurationMinutes;
+        if (outboundLeg.cost) {
+          outboundLeg.cost.amount = outboundAmount;
+        }
+      }
+
+      const returnLeg = itineraryV2.journey.find((l) => l.kind === "return");
+      if (returnLeg) {
+        returnLeg.carrier = flight.carrierName;
+        returnLeg.number = flight.segments[flight.segments.length - 1]?.flightNumber || flight.carrier;
+        returnLeg.durationMin = flight.totalDurationMinutes;
+        if (returnLeg.cost) {
+          returnLeg.cost.amount = returnAmount;
+        }
+      }
+
+      // Recalculate estimated total
+      const totalStays = itineraryV2.stays.reduce((acc, s) => acc + s.hotel.total.amount, 0);
+      const totalJourney = itineraryV2.journey.reduce((acc, j) => acc + (j.cost?.amount || 0), 0);
+      const totalActivities = itineraryV2.days.reduce(
+        (acc, d) => acc + d.events.reduce((eAcc, e) => eAcc + (e.cost?.amount || 0), 0),
+        0
+      );
+      itineraryV2.summary.estimatedTotal.amount = totalStays + totalJourney + totalActivities;
+    }
+  };
+
+  const handleSelectHotel = (hotel: HotelOffer, targetStayId?: string) => {
+    setSelectedHotelOffer(hotel);
+    if (itineraryV2 && itineraryV2.stays.length > 0) {
+      const stay = targetStayId
+        ? itineraryV2.stays.find((s) => s.id === targetStayId) || itineraryV2.stays[0]
+        : itineraryV2.stays[0];
+
+      if (stay) {
+        stay.hotel.name = hotel.name;
+        if (hotel.address) stay.hotel.address = hotel.address;
+        if (hotel.stars) stay.hotel.stars = hotel.stars;
+        stay.hotel.nightlyPrice = {
+          amount: hotel.pricePerNight.amount,
+          currency: hotel.pricePerNight.currency,
+          source: "live_offer",
+          fetchedAt: new Date().toISOString(),
+          kind: "live_offer",
+        };
+        stay.hotel.total = {
+          amount: hotel.pricePerNight.amount * stay.nights,
+          currency: hotel.pricePerNight.currency,
+          source: "live_offer",
+          fetchedAt: new Date().toISOString(),
+          kind: "live_offer",
+        };
+
+        // Recalculate estimated total
+        const totalStays = itineraryV2.stays.reduce((acc, s) => acc + s.hotel.total.amount, 0);
+        const totalJourney = itineraryV2.journey.reduce((acc, j) => acc + (j.cost?.amount || 0), 0);
+        const totalActivities = itineraryV2.days.reduce(
+          (acc, d) => acc + d.events.reduce((eAcc, e) => eAcc + (e.cost?.amount || 0), 0),
+          0
+        );
+        itineraryV2.summary.estimatedTotal.amount = totalStays + totalJourney + totalActivities;
+      }
+    }
+  };
 
   // -------------------------------------------------------------
   // If we have Itinerary V2, render the new rich editorial view
@@ -106,6 +195,20 @@ export function ItineraryView({ plan, onOpenReplanModal }: ItineraryViewProps) {
           </button>
 
           <button
+            className={`nav-tab-btn ${activeTab === "flights" ? "active" : ""}`}
+            onClick={() => handleTabChange("flights")}
+          >
+            <Plane className="w-4 h-4 mr-2" /> Flight Choices
+          </button>
+
+          <button
+            className={`nav-tab-btn ${activeTab === "hotels" ? "active" : ""}`}
+            onClick={() => handleTabChange("hotels")}
+          >
+            <Building2 className="w-4 h-4 mr-2" /> Hotel Options
+          </button>
+
+          <button
             className={`nav-tab-btn ${activeTab === "map" ? "active" : ""}`}
             onClick={() => handleTabChange("map")}
           >
@@ -116,7 +219,7 @@ export function ItineraryView({ plan, onOpenReplanModal }: ItineraryViewProps) {
             className={`nav-tab-btn ${activeTab === "budget" ? "active" : ""}`}
             onClick={() => handleTabChange("budget")}
           >
-            <DollarSign className="w-4 h-4 mr-2" /> Budget
+            <Wallet className="w-4 h-4 mr-2" /> Budget
           </button>
         </div>
 
@@ -124,7 +227,10 @@ export function ItineraryView({ plan, onOpenReplanModal }: ItineraryViewProps) {
         <div className="itinerary-tab-panels">
           {activeTab === "overview" && (
             <div className="tab-pane overview-pane">
-              <JourneyStrip itinerary={itineraryV2} />
+              <JourneyStrip
+                itinerary={itineraryV2}
+                onViewFlights={() => handleTabChange("flights")}
+              />
               <div className="overview-day-preview-section">
                 <div className="section-head">
                   <h3 className="section-title">Schedule Highlights</h3>
@@ -160,6 +266,32 @@ export function ItineraryView({ plan, onOpenReplanModal }: ItineraryViewProps) {
                 stays={itineraryV2.stays}
                 transitions={itineraryV2.transitions}
                 currency={itineraryV2.currency}
+                onViewHotels={() => handleTabChange("hotels")}
+              />
+            </div>
+          )}
+
+          {activeTab === "flights" && (
+            <div className="tab-pane flights-pane">
+              <FlightOptionsView
+                flightOptions={plan.flightOptions}
+                selectedFlightId={selectedFlightOffer?.id}
+                onSelectFlight={handleSelectFlight}
+                currency={itineraryV2.currency}
+                itinerary={itineraryV2}
+                destination={plan.destination}
+              />
+            </div>
+          )}
+
+          {activeTab === "hotels" && (
+            <div className="tab-pane hotels-pane">
+              <HotelOptionsView
+                hotelOptions={plan.hotelOptions || []}
+                selectedHotelName={selectedHotelOffer?.name}
+                onSelectHotel={handleSelectHotel}
+                currency={itineraryV2.currency}
+                itinerary={itineraryV2}
               />
             </div>
           )}
@@ -175,6 +307,53 @@ export function ItineraryView({ plan, onOpenReplanModal }: ItineraryViewProps) {
               <BudgetView budget={plan.budgetBreakdown} />
             </div>
           )}
+        </div>
+
+        {/* Print-Only Comprehensive Dossier (Visible only during window.print()) */}
+        <div className="print-only-itinerary-dossier" aria-hidden="true">
+          <div className="print-dossier-header">
+            <div className="print-brand-line">
+              <span className="print-brand-name">TRAVORA</span>
+              <span className="print-dossier-tag">Curated Itinerary</span>
+            </div>
+            <h1 className="print-trip-title">{itineraryV2.summary.title}</h1>
+            <div className="print-meta-grid">
+              <div className="print-meta-item">
+                <strong>Dates:</strong> {itineraryV2.startDate} to {itineraryV2.endDate} ({itineraryV2.nights} nights)
+              </div>
+              <div className="print-meta-item">
+                <strong>Party:</strong> {itineraryV2.travellers.adults} Adults {itineraryV2.travellers.children > 0 ? `, ${itineraryV2.travellers.children} Children` : ""}
+              </div>
+              <div className="print-meta-item">
+                <strong>Est. Total:</strong> {(itineraryV2.summary.estimatedTotal.amount / 100).toLocaleString(undefined, { style: "currency", currency: itineraryV2.currency })}
+              </div>
+            </div>
+          </div>
+
+          <div className="print-section">
+            <h2 className="print-section-heading">Hotel & Lodging Bases</h2>
+            <div className="print-stays-summary">
+              {itineraryV2.stays.map((stay, idx) => (
+                <div key={stay.id} className="print-stay-item">
+                  <strong>Stay {idx + 1}: {stay.hotel.name}</strong> ({stay.city}) — {stay.nights} nights ({stay.checkInDate} to {stay.checkOutDate})
+                  {stay.hotel.address && <p className="print-stay-addr">{stay.hotel.address}</p>}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="print-section">
+            <h2 className="print-section-heading">Complete Day-by-Day Journey</h2>
+            <DayByDayTimeline
+              days={itineraryV2.days}
+              stays={itineraryV2.stays}
+              currency={itineraryV2.currency}
+            />
+          </div>
+
+          <div className="print-footer-mark">
+            <span>Generated with Travora Travel • All timings in local destination zones</span>
+          </div>
         </div>
       </div>
     );

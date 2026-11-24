@@ -69,7 +69,30 @@ function resolveRouteInfo(origin: string, destination: string) {
       duration: 440,
     };
   }
-  // Route: India
+  // Route: Domestic India (e.g. Delhi to Jodhpur, Mumbai to Jaipur)
+  const isIndianOrigin = o.includes("del") || o.includes("mumbai") || o.includes("bom") || o.includes("india") || o.includes("jodhpur") || o.includes("jaipur") || o.includes("udaipur") || o.includes("blr") || o.includes("bangalore");
+  const isIndianDest = d.includes("del") || d.includes("mumbai") || d.includes("bom") || d.includes("india") || d.includes("jodhpur") || d.includes("jaipur") || d.includes("udaipur") || d.includes("blr") || d.includes("bangalore");
+  const isIntlAirport = d.includes("hnd") || d.includes("tokyo") || d.includes("lhr") || d.includes("cdg") || d.includes("pek") || d.includes("pvg") || d.includes("jfk");
+
+  if (isIndianOrigin && isIndianDest && !isIntlAirport) {
+    const origCode = o.includes("jodhpur") ? "JDH" : o.includes("jaipur") ? "JAI" : o.includes("udaipur") ? "UDR" : o.includes("mumbai") ? "BOM" : "DEL";
+    const destCode = d.includes("jodhpur") ? "JDH" : d.includes("jaipur") ? "JAI" : d.includes("udaipur") ? "UDR" : d.includes("mumbai") ? "BOM" : "DEL";
+    return {
+      originIata: origCode,
+      destIata: destCode,
+      directCarrier: "6E",
+      directCarrierName: "IndiGo",
+      directFlightNo: "6E2431",
+      directUrl: "https://www.goindigo.in",
+      altCarrier: "AI",
+      altCarrierName: "Air India Express",
+      altFlightNo: "AI475",
+      altUrl: "https://www.airindia.com",
+      duration: 85,
+    };
+  }
+
+  // Route: India International (e.g. DEL to Tokyo, London, etc.)
   if (o.includes("del") || o.includes("mumbai") || o.includes("india") || d.includes("del") || d.includes("india")) {
     return {
       originIata: o.slice(0, 3).toUpperCase(),
@@ -109,9 +132,28 @@ export class FlightsFixtureAdapter implements IFlightsProvider {
     const isINR = query.currency.toUpperCase() === "INR";
     const baseMultiplier = isINR ? 85 : 1; // 1 USD ~ 85 INR
 
-    // Price in smallest unit (cents/paise)
-    const directPrice = Math.round(750 * baseMultiplier * 100);
-    const oneStopPrice = Math.round(520 * baseMultiplier * 100);
+    const o = (query.origin ?? "").toLowerCase().trim();
+    const d = (query.destination ?? "").toLowerCase().trim();
+    const isDomestic =
+      (o.includes("del") || o.includes("jodhpur") || o.includes("jaipur") || o.includes("udaipur") || o.includes("mumbai") || o.includes("india")) &&
+      (d.includes("del") || d.includes("jodhpur") || d.includes("jaipur") || d.includes("udaipur") || d.includes("mumbai") || d.includes("india")) &&
+      !d.includes("hnd") && !d.includes("tokyo") && !d.includes("lhr") && !d.includes("cdg");
+
+    // Base passenger price per person for round-trip (both outbound + return legs)
+    // Domestic India: ~₹11,000 INR (~$130 USD) round-trip per passenger
+    // International: ~₹63,750 INR (~$750 USD) round-trip per passenger
+    const perPaxRoundTrip = isDomestic
+      ? Math.round(130 * baseMultiplier * 100)
+      : Math.round(750 * baseMultiplier * 100);
+
+    const isRoundTrip = Boolean(query.returnDate);
+    const perPaxDirect = isRoundTrip ? perPaxRoundTrip : Math.round(perPaxRoundTrip * 0.52);
+    const perPaxOneStop = isRoundTrip ? Math.round(perPaxRoundTrip * 0.72) : Math.round(perPaxRoundTrip * 0.38);
+
+    const totalPassengers = Math.max(1, query.adults);
+    const directPrice = perPaxDirect * totalPassengers;
+    const oneStopPrice = perPaxOneStop * totalPassengers;
+
     const route = resolveRouteInfo(query.origin, query.destination);
 
     const offers: FlightOffer[] = [
@@ -138,7 +180,7 @@ export class FlightsFixtureAdapter implements IFlightsProvider {
         totalDurationMinutes: route.duration,
         stops: 0,
         price: {
-          amount: directPrice * query.adults,
+          amount: directPrice,
           currency: query.currency.toUpperCase(),
         },
         baggageIncluded: true,
@@ -179,7 +221,7 @@ export class FlightsFixtureAdapter implements IFlightsProvider {
         totalDurationMinutes: route.duration + 120,
         stops: 1,
         price: {
-          amount: oneStopPrice * query.adults,
+          amount: oneStopPrice,
           currency: query.currency.toUpperCase(),
         },
         baggageIncluded: true,

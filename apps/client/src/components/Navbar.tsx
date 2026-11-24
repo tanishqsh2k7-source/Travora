@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { Menu, X, SlidersHorizontal, User, Compass } from "lucide-react";
+import { Menu, X, SlidersHorizontal, User, Compass, LogOut } from "lucide-react";
+import type { AuthUser } from "@travora/contracts";
 
 interface NavbarProps {
   onNewTrip: () => void;
@@ -8,6 +9,9 @@ interface NavbarProps {
   onNavigateDestinations?: () => void;
   onNavigateHowItWorks?: () => void;
   onNavigateMyTrips?: () => void;
+  currentUser?: AuthUser | null;
+  onOpenAuth?: () => void;
+  onLogout?: () => void;
 }
 
 export function Navbar({
@@ -17,8 +21,12 @@ export function Navbar({
   onNavigateDestinations,
   onNavigateHowItWorks,
   onNavigateMyTrips,
+  currentUser = null,
+  onOpenAuth,
+  onLogout,
 }: NavbarProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [activeSection, setActiveSection] = useState<string | null>(null);
 
   const scrollTo = (id: string, customCb?: () => void) => {
@@ -103,15 +111,74 @@ export function Navbar({
             <span>Preferences</span>
           </button>
 
-          <button
-            type="button"
-            className="header-action-btn ghost"
-            onClick={onOpenPreferences}
-            aria-label="Account profile"
-          >
-            <User className="w-4 h-4" />
-            <span>Sign in</span>
-          </button>
+          {currentUser ? (
+            <div className="user-nav-dropdown-wrapper">
+              <button
+                type="button"
+                className="header-action-btn user-nav-btn"
+                onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                aria-expanded={isUserMenuOpen}
+              >
+                <div className="user-avatar-badge">
+                  {(currentUser.name || currentUser.email)[0].toUpperCase()}
+                </div>
+                <span className="user-display-name">
+                  {currentUser.name || currentUser.email.split("@")[0]}
+                </span>
+              </button>
+
+              {isUserMenuOpen && (
+                <div className="user-nav-popover">
+                  <div className="user-popover-info">
+                    <strong className="user-full-name">{currentUser.name || "Explorer"}</strong>
+                    <span className="user-email-addr">{currentUser.email}</span>
+                  </div>
+                  <div className="user-popover-sep"></div>
+                  <button
+                    type="button"
+                    className="user-popover-item"
+                    onClick={() => {
+                      setIsUserMenuOpen(false);
+                      scrollTo("planner", onNavigateMyTrips);
+                    }}
+                  >
+                    My Trips
+                  </button>
+                  <button
+                    type="button"
+                    className="user-popover-item"
+                    onClick={() => {
+                      setIsUserMenuOpen(false);
+                      onOpenPreferences();
+                    }}
+                  >
+                    Trip Preferences
+                  </button>
+                  <div className="user-popover-sep"></div>
+                  <button
+                    type="button"
+                    className="user-popover-item text-danger"
+                    onClick={() => {
+                      setIsUserMenuOpen(false);
+                      onLogout?.();
+                    }}
+                  >
+                    <LogOut className="w-3.5 h-3.5 mr-1.5 inline" /> Sign Out
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <button
+              type="button"
+              className="header-action-btn ghost auth-signin-btn"
+              onClick={onOpenAuth}
+              aria-label="Account sign in"
+            >
+              <User className="w-4 h-4 mr-1.5" />
+              <span>Sign in</span>
+            </button>
+          )}
 
           {/* Mobile hamburger toggle */}
           <button
@@ -161,16 +228,29 @@ export function Navbar({
             >
               <SlidersHorizontal className="w-4 h-4" /> Preferences
             </button>
-            <button
-              type="button"
-              className="mobile-drawer-link"
-              onClick={() => {
-                setIsMobileMenuOpen(false);
-                onOpenPreferences();
-              }}
-            >
-              <User className="w-4 h-4" /> Sign in
-            </button>
+            {currentUser ? (
+              <button
+                type="button"
+                className="mobile-drawer-link text-danger"
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                  onLogout?.();
+                }}
+              >
+                <LogOut className="w-4 h-4" /> Sign Out ({currentUser.name || currentUser.email})
+              </button>
+            ) : (
+              <button
+                type="button"
+                className="mobile-drawer-link"
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                  onOpenAuth?.();
+                }}
+              >
+                <User className="w-4 h-4" /> Sign in
+              </button>
+            )}
           </div>
         </div>
       )}

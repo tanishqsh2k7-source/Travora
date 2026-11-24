@@ -11,15 +11,17 @@ import {
   ShieldCheck,
   CheckCircle2,
   Tag,
+  Building2,
 } from "lucide-react";
 
 interface StaysTimelineProps {
   stays: StaySegment[];
   transitions: Transition[];
   currency: string;
+  onViewHotels?: (stayId?: string) => void;
 }
 
-export function StaysTimeline({ stays, transitions, currency }: StaysTimelineProps) {
+export function StaysTimeline({ stays, transitions, currency, onViewHotels }: StaysTimelineProps) {
   const formatMoney = (minorUnits: number) => {
     return (minorUnits / 100).toLocaleString(undefined, {
       style: "currency",
@@ -156,10 +158,22 @@ export function StaysTimeline({ stays, transitions, currency }: StaysTimelinePro
                       Provider: <code>{stay.hotel.nightlyPrice.source}</code> • Fetched:{" "}
                       {new Date(stay.hotel.nightlyPrice.fetchedAt).toLocaleDateString()}
                     </span>
-                    <span className="guarantee-pill">
-                      <CheckCircle2 className="w-3.5 h-3.5 inline mr-1 text-emerald" />
-                      Continuous Booking Window
-                    </span>
+                    <div className="stay-footer-right">
+                      {onViewHotels && (
+                        <button
+                          type="button"
+                          className="btn-switch-hotel"
+                          onClick={() => onViewHotels(stay.id)}
+                        >
+                          <Building2 className="w-3.5 h-3.5 inline mr-1 text-emerald" />
+                          Compare & switch hotel options →
+                        </button>
+                      )}
+                      <span className="guarantee-pill">
+                        <CheckCircle2 className="w-3.5 h-3.5 inline mr-1 text-emerald" />
+                        Continuous Booking Window
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>

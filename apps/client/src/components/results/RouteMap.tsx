@@ -21,13 +21,14 @@ export function RouteMap({ itinerary }: RouteMapProps) {
       mapInstanceRef.current = null;
     }
 
-    // Default center (Tokyo or fallback)
-    const initialLat = itinerary.journey[0]?.from.lat ?? 35.6762;
-    const initialLng = itinerary.journey[0]?.from.lng ?? 139.6503;
+    // Default center to destination or first stay base
+    const firstStay = itinerary.stays[0];
+    const initialLat = firstStay?.hotel.lat || itinerary.journey[0]?.to.lat || 26.2389;
+    const initialLng = firstStay?.hotel.lng || itinerary.journey[0]?.to.lng || 73.0243;
 
     const map = L.map(mapContainerRef.current, {
       center: [initialLat, initialLng],
-      zoom: 6,
+      zoom: 12,
       scrollWheelZoom: false,
     });
 
@@ -45,26 +46,54 @@ export function RouteMap({ itinerary }: RouteMapProps) {
     // 1. Plot Stays and Journey Nodes
     const visitedPoints: Array<{ name: string; lat: number; lng: number; type: string; details: string }> = [];
 
-    // Origin
+    // Origin (if available and valid)
     if (itinerary.journey.length > 0) {
       const origin = itinerary.journey[0].from;
-      visitedPoints.push({
-        name: origin.name,
-        lat: origin.lat,
-        lng: origin.lng,
-        type: "origin",
-        details: `Origin Departure • ${origin.city}`,
-      });
+      if (origin.lat && origin.lng && (origin.lat !== 0 || origin.lng !== 0)) {
+        visitedPoints.push({
+          name: origin.name,
+          lat: origin.lat,
+          lng: origin.lng,
+          type: "origin",
+          details: `Origin Departure • ${origin.city}`,
+        });
+      }
     }
 
     // Stays
     itinerary.stays.forEach((stay, idx) => {
-      visitedPoints.push({
-        name: stay.hotel.name,
-        lat: stay.hotel.lat,
-        lng: stay.hotel.lng,
-        type: "stay",
-        details: `Stay ${idx + 1} (${stay.nights} nights) • ${stay.city}`,
+      if (stay.hotel.lat && stay.hotel.lng && (stay.hotel.lat !== 0 || stay.hotel.lng !== 0)) {
+        visitedPoints.push({
+          name: stay.hotel.name,
+          lat: stay.hotel.lat,
+          lng: stay.hotel.lng,
+          type: "stay",
+          details: `Stay ${idx + 1} (${stay.nights} nights) • ${stay.city}`,
+        });
+      }
+    });
+
+    // 2. Plot Sightseeing Stops from Itinerary Days
+    const seenPlaces = new Set<string>();
+    itinerary.days.forEach((day) => {
+      day.events.forEach((evt) => {
+        if (
+          evt.place &&
+          evt.place.lat &&
+          evt.place.lng &&
+          (evt.place.lat !== 0 || evt.place.lng !== 0) &&
+          !seenPlaces.has(evt.place.name.toLowerCase())
+        ) {
+          seenPlaces.add(evt.place.name.toLowerCase());
+          const timeStr = evt.startLocal.includes("T") ? evt.startLocal.split("T")[1].slice(0, 5) : "";
+          visitedPoints.push({
+            name: evt.place.name,
+            lat: evt.place.lat,
+            lng: evt.place.lng,
+            type: "sight",
+            details: `Day ${day.dayNumber}${timeStr ? ` • ${timeStr}` : ""} • ${evt.title}`,
+          });
+        }
       });
     });
 
@@ -72,9 +101,16 @@ export function RouteMap({ itinerary }: RouteMapProps) {
     visitedPoints.forEach((pt, idx) => {
       latLngBounds.extend([pt.lat, pt.lng]);
 
+      const bg =
+        pt.type === "origin"
+          ? "#255836"
+          : pt.type === "stay"
+          ? "#6E3B1C"
+          : "#D97706";
+
       const markerHtml = `
         <div style="
-          background: ${pt.type === "origin" ? "#0284c7" : "#0d9488"};
+          background: ${bg};
           color: white;
           width: 28px;
           height: 28px;
@@ -83,11 +119,11 @@ export function RouteMap({ itinerary }: RouteMapProps) {
           align-items: center;
           justify-content: center;
           font-weight: 700;
-          font-size: 13px;
+          font-size: 12px;
           border: 2px solid white;
           box-shadow: 0 2px 6px rgba(0,0,0,0.3);
         ">
-          ${idx + 1}
+          ${pt.type === "origin" ? "✈" : pt.type === "stay" ? "⌂" : idx + 1}
         </div>
       `;
 
@@ -101,33 +137,41 @@ export function RouteMap({ itinerary }: RouteMapProps) {
       const marker = L.marker([pt.lat, pt.lng], { icon: customIcon }).addTo(map);
       marker.bindPopup(`
         <div style="font-family: inherit; font-size: 13px; line-height: 1.4;">
-          <strong style="display:block; font-size: 14px; margin-bottom: 4px;">${pt.name}</strong>
-          <span style="color: #64748b;">${pt.details}</span>
+          <strong style="display:block; font-size: 14px; margin-bottom: 4px; color: #231B15;">${pt.name}</strong>
+          <span style="color: #6E3B1C; font-weight: 500;">${pt.details}</span>
         </div>
       `);
     });
 
-    // 2. Draw Polyline Legs
+    // 3. Draw Polyline Legs (Flights and Intercity)
     itinerary.journey.forEach((leg) => {
-      const fromCoord: [number, number] = [leg.from.lat, leg.from.lng];
-      const toCoord: [number, number] = [leg.to.lat, leg.to.lng];
-      latLngBounds.extend(fromCoord);
-      latLngBounds.extend(toCoord);
+      if (
+        leg.from.lat &&
+        leg.from.lng &&
+        leg.to.lat &&
+        leg.to.lng &&
+        (leg.from.lat !== leg.to.lat || leg.from.lng !== leg.to.lng)
+      ) {
+        const fromCoord: [number, number] = [leg.from.lat, leg.from.lng];
+        const toCoord: [number, number] = [leg.to.lat, leg.to.lng];
+        latLngBounds.extend(fromCoord);
+        latLngBounds.extend(toCoord);
 
-      const isFlight = leg.mode === "flight";
+        const isFlight = leg.mode === "flight";
 
-      L.polyline([fromCoord, toCoord], {
-        color: isFlight ? "#0284c7" : "#059669",
-        weight: isFlight ? 3 : 4,
-        dashArray: isFlight ? "6, 8" : undefined,
-        opacity: 0.85,
-      }).addTo(map).bindPopup(`
-        <div style="font-family: inherit; font-size: 13px;">
-          <strong>${leg.from.city} → ${leg.to.city}</strong><br />
-          ${leg.mode.toUpperCase()} • ${Math.round(leg.durationMin / 60)}h ${leg.durationMin % 60}m
-          ${leg.carrier ? `<br />Carrier: ${leg.carrier}` : ""}
-        </div>
-      `);
+        L.polyline([fromCoord, toCoord], {
+          color: isFlight ? "#255836" : "#6E3B1C",
+          weight: isFlight ? 3 : 4,
+          dashArray: isFlight ? "6, 8" : undefined,
+          opacity: 0.85,
+        }).addTo(map).bindPopup(`
+          <div style="font-family: inherit; font-size: 13px;">
+            <strong>${leg.from.city} → ${leg.to.city}</strong><br />
+            ${leg.mode.toUpperCase()} • ${Math.round(leg.durationMin / 60)}h ${leg.durationMin % 60}m
+            ${leg.carrier ? `<br />Carrier: ${leg.carrier}` : ""}
+          </div>
+        `);
+      }
     });
 
     // Fit map to markers with padding
@@ -161,7 +205,10 @@ export function RouteMap({ itinerary }: RouteMapProps) {
             <span className="legend-line line-ground"></span> Ground / Rail Transit
           </span>
           <span className="legend-item">
-            <span className="legend-dot dot-stay"></span> Stay Base
+            <span className="legend-dot dot-stay" style={{ background: "#6E3B1C" }}></span> Stay Base
+          </span>
+          <span className="legend-item">
+            <span className="legend-dot dot-sight" style={{ background: "#D97706" }}></span> Sightseeing Stop
           </span>
         </div>
       </div>

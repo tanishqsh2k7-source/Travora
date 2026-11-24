@@ -15,6 +15,7 @@ import { planStays, type NightPlanItem } from "./plan-stays.js";
 import { scheduleDay, type ActivityCandidate } from "./schedule-day.js";
 import { priceItinerary } from "./price-itinerary.js";
 import { validateItinerary } from "./validate-itinerary.js";
+import { resolveCityGeo } from "./city-geo.js";
 
 function parseCitiesFromDestination(destination: string): string[] {
   // Check for multi-city patterns: "Tokyo and Kyoto", "Tokyo & Kyoto", "Tokyo with Kyoto"
@@ -110,18 +111,31 @@ export function synthesizeItinerary(input: {
       maxChangesSingleCity: 2,
       areaDistanceMinutes: 45,
       hotelResolver: (city, area) => {
+        const cityPlaces = placesResult.filter((p) =>
+          p.address.toLowerCase().includes(city.toLowerCase()) ||
+          p.name.toLowerCase().includes(city.toLowerCase())
+        );
+        const cityGeo = resolveCityGeo(city, cityPlaces.length > 0 ? cityPlaces : placesResult, request.destination);
+
         const matching = hotelsResult.find((h) =>
           h.name.toLowerCase().includes(city.toLowerCase()) ||
           h.address.toLowerCase().includes(city.toLowerCase())
         ) || selectedHotel;
+
+        const hotelLat = matching?.coordinates && matching.coordinates.lat !== 0
+          ? matching.coordinates.lat
+          : cityGeo.lat;
+        const hotelLng = matching?.coordinates && matching.coordinates.lng !== 0
+          ? matching.coordinates.lng
+          : cityGeo.lng;
 
         if (matching) {
           return {
             name: matching.name,
             address: matching.address,
             stars: matching.rating ? Math.round(matching.rating) : 4,
-            lat: matching.coordinates?.lat ?? 35.6895,
-            lng: matching.coordinates?.lng ?? 139.6917,
+            lat: hotelLat,
+            lng: hotelLng,
             nightlyPrice: {
               amount: matching.pricePerNight?.amount ?? 18000,
               currency,
@@ -141,6 +155,8 @@ export function synthesizeItinerary(input: {
         return {
           name: `${city} Central Hotel`,
           address: `${area}, ${city}`,
+          lat: cityGeo.lat,
+          lng: cityGeo.lng,
         };
       },
     },
@@ -148,31 +164,42 @@ export function synthesizeItinerary(input: {
 
   // 5. Build Journey legs
   const originCity = request.origin.split(",")[0].trim();
+  const originGeo = resolveCityGeo(originCity, undefined, request.origin);
   const originPlace: Place = {
-    name: `${originCity} International Airport`,
+    name: originGeo.airportName,
     city: originCity,
-    country: "Origin Country",
-    lat: 28.5562,
-    lng: 77.1000,
-    timezone: "Asia/Kolkata",
+    country: originGeo.country,
+    lat: originGeo.lat,
+    lng: originGeo.lng,
+    timezone: originGeo.timezone,
   };
 
-  const cityVisits: CityVisit[] = cityNames.map((city, idx) => {
+  const cityVisits: CityVisit[] = cityNames.map((city) => {
     const cityStays = stays.filter((s) => s.city.toLowerCase() === city.toLowerCase());
     const arrDate = cityStays[0]?.checkInDate ?? request.startDate;
     const depDate = cityStays[cityStays.length - 1]?.checkOutDate ?? request.endDate;
     const n = cityStays.reduce((sum, s) => sum + s.nights, 0);
 
+    const cityPlaces = placesResult.filter((p) =>
+      p.address.toLowerCase().includes(city.toLowerCase()) ||
+      p.name.toLowerCase().includes(city.toLowerCase())
+    );
+    const cityGeo = resolveCityGeo(
+      city,
+      cityPlaces.length > 0 ? cityPlaces : placesResult,
+      request.destination
+    );
+
     return {
       city,
-      country: "Japan",
+      country: cityGeo.country,
       place: {
-        name: `${city} Central Station`,
+        name: `${city} Central Hub`,
         city,
-        country: "Japan",
-        lat: idx === 0 ? 35.6812 : 34.9858,
-        lng: idx === 0 ? 139.7671 : 135.7588,
-        timezone: "Asia/Tokyo",
+        country: cityGeo.country,
+        lat: cityGeo.lat,
+        lng: cityGeo.lng,
+        timezone: cityGeo.timezone,
       },
       arrivalDate: arrDate,
       departureDate: depDate,
@@ -181,6 +208,15 @@ export function synthesizeItinerary(input: {
   });
 
   const selectedFlight = flightsResult[0];
+  const totalFlightAmount = selectedFlight?.price?.amount ?? 0;
+  const isRoundTripFlight = Boolean(selectedFlight?.returnDate);
+  const outboundFlightCost = isRoundTripFlight
+    ? Math.round(totalFlightAmount * 0.52)
+    : totalFlightAmount;
+  const returnFlightCost = isRoundTripFlight
+    ? totalFlightAmount - outboundFlightCost
+    : 0;
+
   const journey = buildJourney({
     originPlace,
     destinationCities: cityVisits,
@@ -191,21 +227,21 @@ export function synthesizeItinerary(input: {
       carrier: selectedFlight.carrierName || "Airline Partner",
       number: `${selectedFlight.carrier || "XX"}101`,
       cost: {
-        amount: selectedFlight.price.amount,
+        amount: outboundFlightCost,
         currency,
         kind: dataMode === "live" ? "live_offer" : "demo_offer",
         source: "flight_provider",
         fetchedAt: new Date().toISOString(),
       },
     } : undefined,
-    returnFlight: selectedFlight ? {
+    returnFlight: selectedFlight && isRoundTripFlight ? {
       departLocal: `${dates[dates.length - 1]}T16:00:00`,
       arriveLocal: `${dates[dates.length - 1]}T22:30:00`,
       durationMin: selectedFlight.totalDurationMinutes || 480,
       carrier: selectedFlight.carrierName || "Airline Partner",
       number: `${selectedFlight.carrier || "XX"}102`,
       cost: {
-        amount: Math.round(selectedFlight.price.amount * 0.9),
+        amount: returnFlightCost,
         currency,
         kind: dataMode === "live" ? "live_offer" : "demo_offer",
         source: "flight_provider",
@@ -233,6 +269,7 @@ export function synthesizeItinerary(input: {
     ) || stays[stays.length - 1];
 
     const currentCity = activeStay?.city ?? cityNames[0];
+    const currentCityGeo = resolveCityGeo(currentCity, placesResult, request.destination);
 
     // Wake up and sleep stay IDs
     const wakeUpStayId = isArrivalDay ? null : (stays.find((s) => date > s.checkInDate && date <= s.checkOutDate)?.id ?? activeStay.id);
@@ -240,45 +277,55 @@ export function synthesizeItinerary(input: {
 
     // Daily activities
     const dayPlaces = placesResult.slice(dIdx * placesPerDay, (dIdx + 1) * placesPerDay);
-    const activities: ActivityCandidate[] = dayPlaces.map((p, pIdx) => ({
-      id: `act_d${dayNumber}_${pIdx + 1}`,
-      name: p.name,
-      place: {
+    const activities: ActivityCandidate[] = dayPlaces.map((p, pIdx) => {
+      // Determine if place is a public/free landmark (streets, parks, viewpoints, neighborhoods)
+      const isFreeSite = /street|park|square|district|neighborhood|bridge|viewpoint|walk|avenue|hill|zaka|cross|path|river|quarter|gardens?\s*$/i.test(p.name);
+
+      return {
+        id: `act_d${dayNumber}_${pIdx + 1}`,
         name: p.name,
-        city: currentCity,
-        country: "Japan",
-        lat: p.coordinates.lat,
-        lng: p.coordinates.lng,
-        timezone: "Asia/Tokyo",
-      },
-      durationMin: p.estimatedDurationMin || 90,
-      cost: {
-        amount: 1500,
-        currency,
-        kind: "estimate",
-        source: "travora_engine",
-        fetchedAt: new Date().toISOString(),
-      },
-      notes: p.description,
-    }));
+        place: {
+          name: p.name,
+          city: currentCity,
+          country: currentCityGeo.country,
+          lat: p.coordinates.lat,
+          lng: p.coordinates.lng,
+          timezone: currentCityGeo.timezone,
+        },
+        durationMin: p.estimatedDurationMin || 90,
+        cost: isFreeSite
+          ? undefined
+          : p.priceLevel && p.priceLevel > 0
+          ? {
+              amount: Math.round(p.priceLevel * 400 * (currency === "INR" ? 85 : 1)),
+              currency,
+              kind: "estimate",
+              source: "travora_engine",
+              fetchedAt: new Date().toISOString(),
+            }
+          : undefined,
+        notes: p.description,
+      };
+    });
 
     const hotelPlace: Place = {
       name: activeStay.hotel.name,
       city: activeStay.city,
-      country: "Japan",
+      country: currentCityGeo.country,
       lat: activeStay.hotel.lat,
       lng: activeStay.hotel.lng,
-      timezone: "Asia/Tokyo",
+      timezone: currentCityGeo.timezone,
     };
 
     const nextStay = matchingTransition ? stays.find((s) => s.id === matchingTransition.toStayId) : undefined;
+    const nextCityGeo = nextStay ? resolveCityGeo(nextStay.city, placesResult, request.destination) : undefined;
     const nextHotelPlace: Place | undefined = nextStay ? {
       name: nextStay.hotel.name,
       city: nextStay.city,
-      country: "Japan",
+      country: nextCityGeo?.country ?? currentCityGeo.country,
       lat: nextStay.hotel.lat,
       lng: nextStay.hotel.lng,
-      timezone: "Asia/Tokyo",
+      timezone: nextCityGeo?.timezone ?? currentCityGeo.timezone,
     } : undefined;
 
     const events = scheduleDay(activities, {

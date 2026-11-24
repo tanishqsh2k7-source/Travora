@@ -1,22 +1,20 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import type { AgentEvent } from "@travora/contracts";
 import {
   Compass,
   Plane,
   Building2,
-  CloudSun,
-  MapPin,
-  Calculator,
   ShieldCheck,
   CheckCircle2,
   Clock,
   AlertCircle,
   RefreshCw,
-  ChevronDown,
-  Terminal,
+  ArrowRight,
+  MapPin,
 } from "lucide-react";
 import { Photo } from "./Photo.js";
 import { Button } from "./ui/Button.js";
+import { useDestinationImage } from "../services/imageService.js";
 
 interface PlanningProgressProps {
   events: AgentEvent[];
@@ -29,68 +27,49 @@ interface PlanningProgressProps {
   onRetry: () => void;
 }
 
-interface TeamMember {
+interface Milestone {
   id: string;
-  name: string;
-  role: string;
+  title: string;
+  description: string;
   icon: React.ReactNode;
 }
 
-const PLANNING_TEAM: TeamMember[] = [
+const MILESTONES: Milestone[] = [
   {
-    id: "planner",
-    name: "Trip planner",
-    role: "Validates travel dates, party size, and requirements",
-    icon: <Compass className="w-5 h-5 text-terracotta" />,
+    id: "route",
+    title: "Route & Transport Windows",
+    description: "Aligning arrival, departure, and connection buffers",
+    icon: <Plane className="w-5 h-5 text-sky-600" />,
   },
   {
-    id: "flights",
-    name: "Flight scout",
-    role: "Scans real schedules, connections, and fares",
-    icon: <Plane className="w-5 h-5 text-teal" />,
-  },
-  {
-    id: "hotels",
-    name: "Stay finder",
-    role: "Locates neighborhood hotels and check-in schedules",
+    id: "stays",
+    title: "Neighborhood Lodging",
+    description: "Selecting central bases with seamless check-in logistics",
     icon: <Building2 className="w-5 h-5 text-amber" />,
   },
   {
-    id: "weather",
-    name: "Weather watcher",
-    role: "Checks microclimate forecasts and rain forecasts",
-    icon: <CloudSun className="w-5 h-5 text-sky-600" />,
+    id: "sights",
+    title: "Daily Sights & Activities",
+    description: "Clustering attractions to minimize transit and avoid backtracking",
+    icon: <Compass className="w-5 h-5 text-teal" />,
   },
   {
-    id: "routes",
-    name: "Route planner",
-    role: "Optimizes daily stop order to prevent backtracking",
-    icon: <MapPin className="w-5 h-5 text-indigo-600" />,
-  },
-  {
-    id: "budget",
-    name: "Budget keeper",
-    role: "Calculates penny-exact totals and FX conversion",
-    icon: <Calculator className="w-5 h-5 text-emerald-600" />,
-  },
-  {
-    id: "reviewer",
-    name: "Reviewer",
-    role: "Audits pacing, transfers, and rainy-day options",
+    id: "review",
+    title: "Schedule & Budget Balance",
+    description: "Cross-referencing weather, opening hours, and verified expenses",
     icon: <ShieldCheck className="w-5 h-5 text-forest" />,
   },
 ];
 
-const CALM_MESSAGES = [
-  "Checking flight routes and optimal departure windows...",
-  "Reviewing neighborhood lodging and hotel locations...",
-  "Clustering daily sights to minimize walking and transit time...",
-  "Checking weather forecasts for outdoor and indoor balance...",
-  "Finalizing schedule timings and verified budget breakdowns...",
+const INSPIRING_NOTES = [
+  "Checking optimal travel windows and scenic routes...",
+  "Selecting central neighborhood stays near key transit...",
+  "Clustering sights geographically to avoid crisscrossing town...",
+  "Balancing open-air walks with covered cultural landmarks...",
+  "Verifying check-in times and penny-exact budget allocations...",
 ];
 
 export function PlanningProgress({
-  events,
   progress,
   stage,
   destination,
@@ -99,59 +78,43 @@ export function PlanningProgress({
   onViewPlan,
   onRetry,
 }: PlanningProgressProps) {
-  const [isUnderTheHoodOpen, setIsUnderTheHoodOpen] = useState(false);
   const [messageIdx, setMessageIdx] = useState(0);
-  const logEndRef = useRef<HTMLDivElement>(null);
+  const { imageUrl, cityName } = useDestinationImage(destination);
 
   useEffect(() => {
     const timer = setInterval(() => {
-      setMessageIdx((prev) => (prev + 1) % CALM_MESSAGES.length);
+      setMessageIdx((prev) => (prev + 1) % INSPIRING_NOTES.length);
     }, 3800);
     return () => clearInterval(timer);
   }, []);
 
-  useEffect(() => {
-    if (isUnderTheHoodOpen) {
-      logEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    }
-  }, [events, isUnderTheHoodOpen]);
-
-  // Determine each team member's live status
-  const getMemberStatus = (id: string): "idle" | "working" | "done" | "attention" => {
+  // Determine each milestone's status based on current planning progress and stage
+  const getMilestoneStatus = (id: string): "idle" | "working" | "done" | "attention" => {
     if (status === "completed") return "done";
     if (status === "failed") return "attention";
 
     switch (id) {
-      case "planner":
-        return stage === "intake" ? "working" : "done";
-      case "flights":
-        if (["intake", "supervisor"].includes(stage)) return "idle";
-        if (stage === "research") return "working";
+      case "route":
+        if (progress < 15) return "working";
         return "done";
-      case "hotels":
-        if (["intake", "supervisor"].includes(stage)) return "idle";
-        if (stage === "research") return "working";
+      case "stays":
+        if (progress < 15) return "idle";
+        if (progress < 45) return "working";
         return "done";
-      case "weather":
-        if (["intake", "supervisor"].includes(stage)) return "idle";
-        if (stage === "research") return "working";
+      case "sights":
+        if (progress < 45) return "idle";
+        if (progress < 80) return "working";
         return "done";
-      case "routes":
-        if (["intake", "supervisor", "research"].includes(stage)) return "idle";
-        if (stage === "itinerary") return "working";
-        return "done";
-      case "budget":
-        if (["intake", "supervisor", "research"].includes(stage)) return "idle";
-        if (stage === "itinerary") return "working";
-        return "done";
-      case "reviewer":
-        if (["intake", "supervisor", "research", "itinerary"].includes(stage)) return "idle";
-        if (["critic", "replan"].includes(stage)) return "working";
+      case "review":
+        if (progress < 80) return "idle";
+        if (progress < 100) return "working";
         return "done";
       default:
         return "idle";
     }
   };
+
+  const displayCity = cityName || destination;
 
   return (
     <div className="planning-progress-editorial">
@@ -162,17 +125,17 @@ export function PlanningProgress({
             <span className="editorial-kicker">Custom itinerary in progress</span>
             <h1 className="progress-headline">
               {status === "completed"
-                ? `Your journey to ${destination} is ready`
+                ? `Your journey to ${displayCity} is ready`
                 : status === "failed"
                 ? "Planning interrupted"
-                : `Planning your trip to ${destination}`}
+                : `Crafting your trip to ${displayCity}`}
             </h1>
             <p className="progress-subheadline">
               {status === "completed"
-                ? "All transit routes, lodging bases, and schedules have been checked and verified."
+                ? "All transit routes, lodging bases, and day-by-day schedules have been assembled."
                 : status === "failed"
-                ? error || "An unexpected error occurred while planning your journey."
-                : CALM_MESSAGES[messageIdx]}
+                ? error || "An unexpected issue occurred while assembling your journey."
+                : INSPIRING_NOTES[messageIdx]}
             </p>
           </div>
 
@@ -185,7 +148,9 @@ export function PlanningProgress({
         {/* Global Progress Line */}
         <div className="progress-rail-wrap">
           <div
-            className={`progress-rail-fill ${status === "failed" ? "failed" : status === "completed" ? "completed" : ""}`}
+            className={`progress-rail-fill ${
+              status === "failed" ? "failed" : status === "completed" ? "completed" : ""
+            }`}
             style={{ width: `${Math.max(5, progress)}%` }}
           />
         </div>
@@ -194,7 +159,8 @@ export function PlanningProgress({
         {status === "completed" && (
           <div className="progress-cta-banner">
             <Button variant="primary" size="lg" onClick={onViewPlan}>
-              View complete itinerary
+              <span>View complete itinerary</span>
+              <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
           </div>
         )}
@@ -215,42 +181,45 @@ export function PlanningProgress({
 
         {/* Two-Column Planning Layout */}
         <div className="planning-team-layout">
-          {/* Left Column: Your Planning Team */}
+          {/* Left Column: Planning Milestones */}
           <div className="team-column">
-            <h2 className="team-section-title">Your planning team</h2>
+            <h2 className="team-section-title">Itinerary milestones</h2>
             <div className="team-members-list">
-              {PLANNING_TEAM.map((member) => {
-                const memberStatus = getMemberStatus(member.id);
+              {MILESTONES.map((milestone) => {
+                const milestoneStatus = getMilestoneStatus(milestone.id);
                 return (
-                  <div key={member.id} className={`team-member-card status-${memberStatus}`}>
-                    <div className="member-icon-box">{member.icon}</div>
+                  <div
+                    key={milestone.id}
+                    className={`team-member-card status-${milestoneStatus}`}
+                  >
+                    <div className="member-icon-box">{milestone.icon}</div>
                     <div className="member-info">
                       <div className="member-name-row">
-                        <strong className="member-name">{member.name}</strong>
-                        <span className={`member-status-pill pill-${memberStatus}`}>
-                          {memberStatus === "done" && (
+                        <strong className="member-name">{milestone.title}</strong>
+                        <span className={`member-status-pill pill-${milestoneStatus}`}>
+                          {milestoneStatus === "done" && (
                             <>
-                              <CheckCircle2 className="w-3.5 h-3.5" /> Done
+                              <CheckCircle2 className="w-3.5 h-3.5" /> Complete
                             </>
                           )}
-                          {memberStatus === "working" && (
+                          {milestoneStatus === "working" && (
                             <>
-                              <span className="pulse-dot" /> Working
+                              <span className="pulse-dot" /> In progress
                             </>
                           )}
-                          {memberStatus === "idle" && (
+                          {milestoneStatus === "idle" && (
                             <>
-                              <Clock className="w-3.5 h-3.5" /> Waiting
+                              <Clock className="w-3.5 h-3.5" /> Pending
                             </>
                           )}
-                          {memberStatus === "attention" && (
+                          {milestoneStatus === "attention" && (
                             <>
                               <AlertCircle className="w-3.5 h-3.5" /> Paused
                             </>
                           )}
                         </span>
                       </div>
-                      <p className="member-role">{member.role}</p>
+                      <p className="member-role">{milestone.description}</p>
                     </div>
                   </div>
                 );
@@ -258,67 +227,34 @@ export function PlanningProgress({
             </div>
           </div>
 
-          {/* Right Column: Destination preview & calm message */}
+          {/* Right Column: Destination preview & soothing atmosphere */}
           <div className="destination-preview-column">
             <div className="calm-photo-card">
               <Photo
-                src={`/images/destinations/${destination.toLowerCase().split(",")[0].trim()}/card.jpg`}
-                alt={destination}
+                src={imageUrl || `/images/destinations/${displayCity.toLowerCase().trim()}/card.jpg`}
+                alt={displayCity}
                 width={800}
                 height={600}
-                fallbackTitle={destination}
-                fallbackSubtitle="Curating optimal itinerary"
+                fallbackTitle={displayCity}
+                fallbackSubtitle="Curating your journey"
                 className="calm-photo-img"
                 fill
               />
               <div className="calm-photo-scrim">
                 <div className="calm-photo-caption">
-                  <span className="calm-caption-kicker">Destined for</span>
+                  <span className="calm-caption-kicker">
+                    <MapPin className="w-3 h-3 inline mr-1" />
+                    Destined for
+                  </span>
                   <strong className="calm-caption-name">{destination}</strong>
-                  <p className="calm-caption-status">{CALM_MESSAGES[messageIdx]}</p>
+                  <p className="calm-caption-status">{INSPIRING_NOTES[messageIdx]}</p>
                 </div>
               </div>
             </div>
           </div>
         </div>
-
-        {/* Collapsed 'Under the hood' Disclosure */}
-        <div className="under-the-hood-section">
-          <button
-            type="button"
-            className="under-the-hood-toggle"
-            onClick={() => setIsUnderTheHoodOpen(!isUnderTheHoodOpen)}
-            aria-expanded={isUnderTheHoodOpen}
-          >
-            <div className="toggle-left">
-              <Terminal className="w-4 h-4 text-ink-muted" />
-              <span>Under the hood (Raw agent stream logs)</span>
-              <span className="event-count-pill">{events.length} events</span>
-            </div>
-            <ChevronDown className={`w-4 h-4 chevron ${isUnderTheHoodOpen ? "rotate" : ""}`} />
-          </button>
-
-          {isUnderTheHoodOpen && (
-            <div className="under-the-hood-body">
-              <div className="console-stream-box">
-                {events.map((ev, i) => (
-                  <div key={i} className="stream-event-line">
-                    <span className="stream-time">
-                      [{new Date(ev.timestamp).toLocaleTimeString()}]
-                    </span>
-                    <span className={`stream-type type-${ev.type.replace(".", "-")}`}>
-                      {ev.type}
-                    </span>
-                    <span className="stream-stage">@{ev.stage}:</span>
-                    <span className="stream-msg">{ev.message}</span>
-                  </div>
-                ))}
-                <div ref={logEndRef} />
-              </div>
-            </div>
-          )}
-        </div>
       </div>
     </div>
   );
 }
+export default PlanningProgress;

@@ -16,12 +16,14 @@ export async function hotelsAgentNode(state: TravelState): Promise<TravelStateUp
   const warnings: string[] = [];
 
   try {
+    const totalGuests = Math.max(1, (req.travellers.adults || 1) + (req.travellers.children || 0));
+    const rooms = Math.max(1, Math.ceil(totalGuests / 2));
     const hotelsResult = await providers.hotels.searchHotels({
       destination: req.destination,
       checkInDate: req.startDate,
       checkOutDate: req.endDate,
-      adults: req.travellers.adults,
-      rooms: 1,
+      adults: totalGuests,
+      rooms,
       travelStyle: req.travelStyle,
       currency: req.budget.currency,
     });
